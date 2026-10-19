@@ -1,0 +1,6 @@
+{
+  "name": "U.S. Bank - Personal Banking, Checking, Savings & Loans",
+  "description": "U.S. Bank official digital banking portal. Access checking, savings, loans, credit cards, real-time transfers, and account management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
