@@ -270,10 +270,10 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowLoginModal(true)}
-            className="text-[#1d4ed8] hover:text-[#0c2340] font-bold text-base px-4 py-2 rounded-lg hover:bg-blue-50/60 transition-all cursor-pointer flex items-center gap-1.5"
+            className="text-[#1d4ed8] hover:text-[#0c2340] font-bold text-sm sm:text-base px-3.5 sm:px-4 py-2 rounded-lg hover:bg-blue-50/60 transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Lock className="w-4 h-4 text-[#1d4ed8]" />
             Log in
@@ -365,10 +365,10 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       )}
 
       {/* Hero Section */}
-      <section
-        style={{ background: 'linear-gradient(135deg, #0c2340 0%, #133a6f 100%)' }}
-        className="text-white py-14 sm:py-20 lg:py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
-      >
+          <section
+            style={{ background: 'linear-gradient(135deg, #0c2340 0%, #133a6f 100%)' }}
+            className="text-white py-14 sm:py-20 lg:py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
+          >
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="max-w-2xl space-y-5 text-left">
             <span

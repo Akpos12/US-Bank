@@ -14,6 +14,7 @@ import {
   Lock,
   ChevronRight,
   ExternalLink,
+  PieChart,
 } from 'lucide-react';
 import { Customer } from '../types/banking.ts';
 
@@ -36,6 +37,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'plan-track', label: 'Plan & Track', icon: PieChart },
     { id: 'accounts', label: 'Accounts Portfolio', icon: CreditCard },
     { id: 'transactions', label: 'Transactions & Ledger', icon: Receipt },
     { id: 'transfers', label: 'Transfers & Payments', icon: ArrowRightLeft },

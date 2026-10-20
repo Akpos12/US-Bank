@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Customer, Account, Transaction, BankNotification } from './types/banking.ts';
 import { api } from './services/api.ts';
+import './services/firebase.ts';
 import { LoginPage } from './components/LoginPage.tsx';
 import { PublicHomePage } from './components/PublicHomePage.tsx';
 import { NavigationSidebar } from './components/NavigationSidebar.tsx';
@@ -19,6 +20,7 @@ import { NotificationsPage } from './components/NotificationsPage.tsx';
 import { SecurityCenter } from './components/SecurityCenter.tsx';
 import { ProfilePage } from './components/ProfilePage.tsx';
 import { TransactionDetailsPanel } from './components/TransactionDetailsPanel.tsx';
+import { PlanAndTrackView } from './components/PlanAndTrackView.tsx';
 import { Phone, ShieldCheck, X, Building2, MapPin, ExternalLink, ArrowRight } from 'lucide-react';
 
 export default function App() {
@@ -229,6 +231,16 @@ export default function App() {
                 onNavigate={setCurrentTab}
                 onSelectTx={setActiveTxDetail}
                 onRefreshData={refreshAccountData}
+              />
+            )}
+
+            {currentTab === 'plan-track' && (
+              <PlanAndTrackView
+                customer={customer}
+                accounts={accounts}
+                isAuthenticated={isAuthenticated}
+                onNavigateToTransfers={() => setCurrentTab('transfers')}
+                onSelectTx={setActiveTxDetail}
               />
             )}
 

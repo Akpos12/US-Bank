@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile data for bank portal customers",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["customer", "admin"]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": ["userId", "fullName", "email"]
+    },
+    "BankAccount": {
+      "title": "BankAccount",
+      "description": "Bank account details including transfer restriction status",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "accountNumberMasked": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["checking", "savings", "investment", "credit"]
+        },
+        "verifiedBalance": {
+          "type": "number"
+        },
+        "availableBalance": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "restriction": {
+          "type": "object"
+        }
+      },
+      "required": ["id", "userId", "name", "accountNumberMasked", "verifiedBalance", "availableBalance", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Bank transaction record including pending status and provider",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "userId", "accountId", "label", "amount", "currency", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": "BankAccount",
+      "description": "User accounts, balances, and transfer restriction flags"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User account transaction records including pending hospital bill"
+    }
+  }
+}
