@@ -18,12 +18,40 @@ const DATA_FILE = path.join(DATA_DIR, 'banking_ledger.json');
 
 export const DEFAULT_ACCOUNT_RESTRICTION: AccountRestriction = {
   restriction_active: true,
-  status_label: 'Transfers Temporarily Restricted',
-  reason: 'Additional account verification required',
-  affected_services: ['Outgoing bank transfers'],
-  unaffected_services: ['Account login', 'Transaction history viewing', 'Standard features'],
-  notification_message: 'This transfer restriction is limited to this account. The bank must verify the account before outgoing transfers can resume.',
-  resolution_instructions: 'Contact or visit a bank branch with valid identification to complete the required verification.',
+  status_label: 'Account Inactive & Frozen',
+  reason: 'Account deactivated and unavailable per customer instructions',
+  affected_services: [
+    'Account availability',
+    'Outgoing bank transfers',
+    'Incoming bank transfers',
+    'Debit card purchases',
+    'All operations & transactions',
+  ],
+  unaffected_services: ['Historical statement viewing only'],
+  notification_message:
+    'This account is unavailable, inactive, and frozen. All transfers into or out of this account are completely blocked.',
+  resolution_instructions:
+    'Transfers and operations are disabled for this account per customer instructions.',
+};
+
+export const SAVINGS_ACCOUNT_RESTRICTION: AccountRestriction = {
+  restriction_active: true,
+  status_label: 'Account Inactive & Frozen',
+  reason: 'Account deactivated per customer instructions',
+  affected_services: ['Outgoing bank transfers', 'Incoming bank transfers', 'Account withdrawals', 'All operations & transactions'],
+  unaffected_services: ['Historical statement viewing only'],
+  notification_message: 'This account is completely inactive and does not work. All transfers into or out of this account are blocked.',
+  resolution_instructions: 'Transfers and operations are disabled for this account per customer instructions.',
+};
+
+export const CREDIT_ACCOUNT_RESTRICTION: AccountRestriction = {
+  restriction_active: true,
+  status_label: 'Card & Account Inactive - Operations Disabled',
+  reason: 'Account and card deactivated per customer instructions',
+  affected_services: ['Card purchases', 'Outgoing bank transfers', 'Incoming transfers', 'Cash advances', 'All operations & transactions'],
+  unaffected_services: ['Historical statement viewing only'],
+  notification_message: 'This credit card and account are completely inactive and do not work. All operations and transfers are blocked.',
+  resolution_instructions: 'Transfers and operations are disabled for this account per customer instructions.',
 };
 
 export const PENDING_HOSPITAL_TRANSACTION: Transaction = {
@@ -231,9 +259,9 @@ function generateSeedData(): LedgerData {
       routingNumber: '091000022',
       routingNumberMasked: '•••• 9210',
       type: 'checking',
-      status: 'Transfers Temporarily Restricted',
+      status: 'Frozen',
       currency: 'USD',
-      availableBalance: availableBalance,
+      availableBalance: 0.0,
       ledgerBalance: verifiedBalance,
       openingBalance: initialOpeningBalance,
       openedDate: '2021-01-05',
@@ -250,15 +278,16 @@ function generateSeedData(): LedgerData {
       routingNumber: '091000022',
       routingNumberMasked: '•••• 9210',
       type: 'savings',
-      status: 'Active',
+      status: 'Frozen',
       currency: 'USD',
-      availableBalance: 485920.5,
-      ledgerBalance: 485920.5,
+      availableBalance: 486420.5,
+      ledgerBalance: 486420.5,
       openingBalance: 50000.0,
       openedDate: '2021-03-12',
       lastUpdated: '2026-10-18T12:00:00.000Z',
       interestRate: 4.25,
       isPrimary: false,
+      restriction: SAVINGS_ACCOUNT_RESTRICTION,
     },
     {
       id: 'acc_credit_9920',
@@ -268,7 +297,7 @@ function generateSeedData(): LedgerData {
       routingNumber: '091000022',
       routingNumberMasked: '•••• 9210',
       type: 'credit',
-      status: 'Active',
+      status: 'Frozen',
       currency: 'USD',
       availableBalance: 46850.0,
       ledgerBalance: 3150.0,
@@ -276,6 +305,7 @@ function generateSeedData(): LedgerData {
       openedDate: '2022-06-15',
       lastUpdated: '2026-10-18T12:00:00.000Z',
       isPrimary: false,
+      restriction: CREDIT_ACCOUNT_RESTRICTION,
     },
   ];
 
@@ -425,15 +455,28 @@ class LedgerService {
           };
         }
 
-        // Ensure checking account has transfer restriction applied
+        // Ensure checking account is inactive, frozen, unavailable and transfers blocked
         const checking = parsed.accounts.find((a) => a.id === 'acc_checking_4821');
         if (checking) {
-          checking.status = 'Transfers Temporarily Restricted';
+          checking.status = 'Frozen';
+          checking.availableBalance = 0.0;
           checking.restriction = DEFAULT_ACCOUNT_RESTRICTION;
-          const pendingDebits = parsed.transactions
-            .filter((t) => (t.status === 'pending' || t.status === 'Pending Review') && t.type === 'debit' && t.accountId === checking.id)
-            .reduce((sum, t) => sum + t.amount, 0);
-          checking.availableBalance = Math.round((checking.ledgerBalance - pendingDebits) * 100) / 100;
+        }
+
+        // Ensure High-Yield Savings and Altitude Reserve Visa are inactive, frozen, and cannot transfer
+        const savings = parsed.accounts.find((a) => a.id === 'acc_savings_6194');
+        if (savings) {
+          savings.status = 'Frozen';
+          savings.availableBalance = 486420.5;
+          savings.ledgerBalance = 486420.5;
+          savings.restriction = SAVINGS_ACCOUNT_RESTRICTION;
+        }
+
+        const credit = parsed.accounts.find((a) => a.id === 'acc_credit_9920');
+        if (credit) {
+          credit.status = 'Frozen';
+          credit.availableBalance = 46850.0;
+          credit.restriction = CREDIT_ACCOUNT_RESTRICTION;
         }
 
         // Ensure restriction notification is present
@@ -564,6 +607,17 @@ class LedgerService {
     }
 
     if (
+      fromAcc.id === 'acc_savings_6194' ||
+      fromAcc.id === 'acc_credit_9920' ||
+      fromAcc.status === 'Frozen' ||
+      fromAcc.status === 'Dormant'
+    ) {
+      throw new Error(
+        `Transfers and withdrawals are completely disabled for ${fromAcc.name} (${fromAcc.accountNumberMasked}). This account is inactive and frozen.`
+      );
+    }
+
+    if (
       fromAcc.id === 'acc_checking_4821' ||
       fromAcc.status === 'Transfers Temporarily Restricted' ||
       fromAcc.restriction?.restriction_active
@@ -591,7 +645,20 @@ class LedgerService {
     let toAcc: Account | undefined;
 
     if (req.toType === 'internal' && req.toAccountId) {
+      if (
+        req.toAccountId === 'acc_savings_6194' ||
+        req.toAccountId === 'acc_credit_9920'
+      ) {
+        throw new Error(
+          'Transfers into this account are disabled. The destination account is inactive and frozen.'
+        );
+      }
       toAcc = this.data.accounts.find((a) => a.id === req.toAccountId);
+      if (toAcc && toAcc.status === 'Frozen') {
+        throw new Error(
+          `Transfers to ${toAcc.name} are disabled. Destination account is frozen.`
+        );
+      }
       recipientLabel = toAcc ? toAcc.name : 'Internal Account';
     } else if (req.toType === 'payee' && req.toPayeeId) {
       const p = this.data.payees.find((item) => item.id === req.toPayeeId);

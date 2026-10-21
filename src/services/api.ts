@@ -10,6 +10,8 @@ import {
   AccountStatusData,
 } from '../types/banking.ts';
 
+import { localLedger } from './localLedger.ts';
+
 const TOKEN_KEY = 'usbank_session_token';
 
 export const api = {
@@ -41,22 +43,41 @@ export const api = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(endpoint, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(endpoint, {
+        ...options,
+        headers,
+      });
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      if (response.status === 401 && !endpoint.includes('/login')) {
-        this.clearToken();
-        window.dispatchEvent(new CustomEvent('auth:expired'));
+      // If backend returns 404 (e.g. on Vercel static deployment or custom domain missing /api proxy),
+      // seamlessly resolve via resilient local ledger fallback to prevent "Request failed with status 404"
+      if (response.status === 404) {
+        return localLedger.handleFallback(endpoint, options) as T;
       }
-      throw new Error(data.error || `Request failed with status ${response.status}`);
-    }
 
-    return data as T;
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 401 && !endpoint.includes('/login')) {
+          this.clearToken();
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+        }
+        throw new Error(data.error || `Request failed with status ${response.status}`);
+      }
+
+      return data as T;
+    } catch (err: any) {
+      // If network fails (e.g. offline, DNS or reverse proxy issue), gracefully fall back
+      if (
+        err.message &&
+        (err.message.includes('Failed to fetch') ||
+          err.message.includes('NetworkError') ||
+          err.message.includes('404'))
+      ) {
+        return localLedger.handleFallback(endpoint, options) as T;
+      }
+      throw err;
+    }
   },
 
   async login(identifier: string, password: string, rememberMe: boolean = true) {

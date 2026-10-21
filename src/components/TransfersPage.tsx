@@ -14,6 +14,8 @@ import {
   X,
   CreditCard,
   FileCheck,
+  Lock,
+  Ban,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Account, Payee, TransferRequest, Transaction } from '../types/banking.ts';
@@ -30,10 +32,13 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter eligible accounts: checking is primary, while savings 6194 and credit 9920 are completely inactive/frozen
+  const activeCheckingAccount = accounts.find((a) => a.id === 'acc_checking_4821') || accounts[0];
+
   // Form Fields
-  const [fromAccountId, setFromAccountId] = useState<string>(accounts[0]?.id || 'acc_checking_4821');
-  const [transferType, setTransferType] = useState<'internal' | 'payee'>('internal');
-  const [toAccountId, setToAccountId] = useState<string>(accounts[1]?.id || 'acc_savings_6194');
+  const [fromAccountId, setFromAccountId] = useState<string>(activeCheckingAccount?.id || 'acc_checking_4821');
+  const [transferType, setTransferType] = useState<'internal' | 'payee'>('payee');
+  const [toAccountId, setToAccountId] = useState<string>('');
   const [toPayeeId, setToPayeeId] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -87,6 +92,17 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
     e.preventDefault();
     setError(null);
 
+    if (
+      fromAccount?.id === 'acc_savings_6194' ||
+      fromAccount?.id === 'acc_credit_9920' ||
+      fromAccount?.status === 'Frozen'
+    ) {
+      setError(
+        `Transfers and withdrawals are completely disabled for ${fromAccount.name} (${fromAccount.accountNumberMasked}). This account is inactive and frozen per security instructions.`
+      );
+      return;
+    }
+
     if (fromAccount?.status === 'Transfers Temporarily Restricted' || fromAccount?.restriction?.restriction_active) {
       setError(
         'Outgoing bank transfers are temporarily unavailable for this account due to additional account verification required. Please contact customer support or visit your local branch with valid identification to complete the required verification process.'
@@ -114,9 +130,25 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
       return;
     }
 
-    if (transferType === 'internal' && fromAccountId === toAccountId) {
-      setError('Origin and destination accounts cannot be identical.');
-      return;
+    if (transferType === 'internal') {
+      if (!toAccountId) {
+        setError('Please select a valid destination account.');
+        return;
+      }
+      if (fromAccountId === toAccountId) {
+        setError('Origin and destination accounts cannot be identical.');
+        return;
+      }
+      if (
+        toAccount?.id === 'acc_savings_6194' ||
+        toAccount?.id === 'acc_credit_9920' ||
+        toAccount?.status === 'Frozen'
+      ) {
+        setError(
+          `Transfers to ${toAccount?.name || 'this account'} (${toAccount?.accountNumberMasked || ''}) are completely disabled. The destination account is inactive and frozen.`
+        );
+        return;
+      }
     }
 
     if (transferType === 'payee' && !toPayeeId) {
@@ -266,6 +298,30 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
         </div>
       )}
 
+      {/* Frozen / Inactive Account Transfer Restriction Notice */}
+      {(fromAccount?.status === 'Frozen' || fromAccount?.id === 'acc_savings_6194' || fromAccount?.id === 'acc_credit_9920') && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-slate-800 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center shrink-0 border border-rose-200 mt-0.5">
+              <Lock className="w-5 h-5 text-rose-700" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-extrabold text-sm text-slate-900">
+                  Account Status: Inactive & Frozen
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-200 text-rose-900">
+                  All Operations & Transfers Disabled
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 mt-1 font-medium leading-relaxed">
+                This account ({fromAccount.name} {fromAccount.accountNumberMasked}) is completely inactive and does not work. All outgoing and incoming transfers are permanently disabled.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Account Transfer Restriction Notice */}
       {fromAccount?.status === 'Transfers Temporarily Restricted' && (
         <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-slate-800 space-y-3">
@@ -318,30 +374,70 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
                   From Account (Funding Source)
                 </label>
                 <div className="space-y-2">
-                  {accounts.map((acc) => (
-                    <div
-                      key={acc.id}
-                      onClick={() => setFromAccountId(acc.id)}
-                      className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                        fromAccountId === acc.id
-                          ? 'border-[#002855] bg-blue-50/40 shadow-xs'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-bold text-slate-900">{acc.name}</div>
-                          <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs font-bold font-mono text-slate-900">
-                            ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {accounts.map((acc) => {
+                    const isFrozen =
+                      acc.id === 'acc_savings_6194' ||
+                      acc.id === 'acc_credit_9920' ||
+                      acc.status === 'Frozen';
+
+                    if (isFrozen) {
+                      return (
+                        <div
+                          key={acc.id}
+                          onClick={() => {
+                            setError(
+                              `Transfers and withdrawals are completely disabled for ${acc.name} (${acc.accountNumberMasked}). This account is inactive and frozen per customer instructions.`
+                            );
+                          }}
+                          className="p-3.5 rounded-xl border-2 border-slate-200 bg-slate-50/80 opacity-70 cursor-not-allowed transition-all hover:border-rose-300"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span>{acc.name}</span>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
+                                  <Lock className="w-2.5 h-2.5" />
+                                  Inactive • Locked
+                                </span>
+                              </div>
+                              <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-bold font-mono text-slate-500">
+                                ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </div>
+                              <div className="text-[10px] text-rose-700 font-bold">Transfers Disabled</div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-slate-400">Available</div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={acc.id}
+                        onClick={() => setFromAccountId(acc.id)}
+                        className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                          fromAccountId === acc.id
+                            ? 'border-[#002855] bg-blue-50/40 shadow-xs'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-xs font-bold text-slate-900">{acc.name}</div>
+                            <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-bold font-mono text-slate-900">
+                              ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </div>
+                            <div className="text-[10px] text-slate-400">Available</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -375,32 +471,72 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
 
                 {transferType === 'internal' ? (
                   <div className="space-y-2">
-                    {accounts.map((acc) => (
-                      <div
-                        key={acc.id}
-                        onClick={() => setToAccountId(acc.id)}
-                        className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                          fromAccountId === acc.id
-                            ? 'opacity-40 pointer-events-none border-slate-100'
-                            : toAccountId === acc.id
-                            ? 'border-[#002855] bg-blue-50/40 shadow-xs'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs font-bold text-slate-900">{acc.name}</div>
-                            <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xs font-bold font-mono text-slate-900">
-                              ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {accounts.map((acc) => {
+                      const isFrozen =
+                        acc.id === 'acc_savings_6194' ||
+                        acc.id === 'acc_credit_9920' ||
+                        acc.status === 'Frozen';
+
+                      if (isFrozen) {
+                        return (
+                          <div
+                            key={acc.id}
+                            onClick={() => {
+                              setError(
+                                `Transfers to ${acc.name} (${acc.accountNumberMasked}) are completely disabled. The destination account is inactive and frozen.`
+                              );
+                            }}
+                            className="p-3.5 rounded-xl border-2 border-slate-200 bg-slate-50/80 opacity-70 cursor-not-allowed transition-all hover:border-rose-300"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                  <span>{acc.name}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
+                                    <Ban className="w-2.5 h-2.5" />
+                                    Inactive • Cannot Receive Transfers
+                                  </span>
+                                </div>
+                                <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs font-bold font-mono text-slate-500">
+                                  ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-[10px] text-rose-700 font-bold">Transfers Blocked</div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-slate-400">Current Balance</div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={acc.id}
+                          onClick={() => setToAccountId(acc.id)}
+                          className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                            fromAccountId === acc.id
+                              ? 'opacity-40 pointer-events-none border-slate-100'
+                              : toAccountId === acc.id
+                              ? 'border-[#002855] bg-blue-50/40 shadow-xs'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-xs font-bold text-slate-900">{acc.name}</div>
+                              <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-bold font-mono text-slate-900">
+                                ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </div>
+                              <div className="text-[10px] text-slate-400">Current Balance</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -548,10 +684,20 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
             <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 type="submit"
-                disabled={numAmount <= 0 || fromAccount?.status === 'Transfers Temporarily Restricted'}
+                disabled={
+                  numAmount <= 0 ||
+                  fromAccount?.status === 'Frozen' ||
+                  fromAccount?.status === 'Transfers Temporarily Restricted' ||
+                  (fromAccount && fromAccount.availableBalance <= 0)
+                }
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {fromAccount?.status === 'Transfers Temporarily Restricted' ? (
+                {fromAccount?.status === 'Frozen' ? (
+                  <>
+                    <Lock className="w-4 h-4 text-rose-400" />
+                    Transfers Disabled (Account Inactive & Frozen)
+                  </>
+                ) : fromAccount?.status === 'Transfers Temporarily Restricted' ? (
                   <>Transfers Restricted on Selected Account</>
                 ) : (
                   <>

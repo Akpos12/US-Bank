@@ -912,18 +912,18 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
           >
             <div className="p-4 sm:p-5 space-y-4">
               {/* Account Restriction Status Card */}
-              {accounts.some((a) => a.restriction?.restriction_active) && (
-                <div className="rounded-2xl bg-amber-50 border border-amber-300 p-3.5 flex items-start gap-3 shadow-2xs">
-                  <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              {accounts.some((a) => a.status === 'Frozen' || a.restriction?.restriction_active) && (
+                <div className="rounded-2xl bg-rose-50 border border-rose-300 p-3.5 flex items-start gap-3 shadow-2xs">
+                  <Lock className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
                   <div className="text-xs space-y-1">
-                    <div className="flex items-center gap-1.5 font-extrabold text-amber-900">
-                      <span>Transfers Temporarily Restricted</span>
-                      <span className="text-[10px] bg-amber-200/80 text-amber-900 px-1.5 py-0.2 rounded font-bold">
-                        Account Notice
+                    <div className="flex items-center gap-1.5 font-extrabold text-rose-900">
+                      <span>Account Inactive & Frozen</span>
+                      <span className="text-[10px] bg-rose-200/80 text-rose-900 px-1.5 py-0.2 rounded font-bold">
+                        Transfers Disabled
                       </span>
                     </div>
-                    <p className="text-amber-800 leading-tight">
-                      Additional account verification required. Outgoing transfers unavailable.
+                    <p className="text-rose-800 leading-tight">
+                      Account operations and transfers are completely deactivated per customer security instructions.
                     </p>
                   </div>
                 </div>

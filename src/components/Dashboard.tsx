@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChevronRight,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
 import { Account, Customer, Transaction } from '../types/banking.ts';
 import { BalanceHistoryChart } from './BalanceHistoryChart.tsx';
@@ -170,9 +171,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] uppercase tracking-wider font-bold text-slate-300">
-                Total Available Balance
+                {primaryAccount.status === 'Frozen' ? 'Available Balance (Unavailable)' : 'Total Available Balance'}
               </span>
-              {primaryAccount.status === 'Transfers Temporarily Restricted' ? (
+              {primaryAccount.status === 'Frozen' ? (
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-400" title="Account Inactive & Frozen"></span>
+              ) : primaryAccount.status === 'Transfers Temporarily Restricted' ? (
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="Transfers Restricted"></span>
               ) : (
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -181,12 +184,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="text-2xl sm:text-3xl font-black font-mono mt-3 tracking-tight">
               {hideBalance
                 ? '••••••••••'
+                : primaryAccount.status === 'Frozen'
+                ? '$0.00'
                 : `$${primaryAccount.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300 flex items-center justify-between">
             <span>{primaryAccount.name} •••• 4821</span>
-            {primaryAccount.status === 'Transfers Temporarily Restricted' ? (
+            {primaryAccount.status === 'Frozen' ? (
+              <span className="font-semibold text-rose-300 flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-300/30 text-[10px]">
+                <Lock className="w-2.5 h-2.5 text-rose-400" />
+                Account Inactive & Frozen
+              </span>
+            ) : primaryAccount.status === 'Transfers Temporarily Restricted' ? (
               <span className="font-semibold text-amber-300 flex items-center gap-1.5 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-300/30 text-[10px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                 Transfers Restricted
@@ -327,39 +337,55 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-3">
-            {accounts.map((acc) => (
-              <div
-                key={acc.id}
-                onClick={() => onNavigate('accounts')}
-                className="p-3.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/70 transition-all cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#002855] flex items-center justify-center font-bold text-xs shrink-0">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>{acc.name}</span>
-                      {acc.status === 'Transfers Temporarily Restricted' && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                          Restricted
-                        </span>
-                      )}
+            {accounts.map((acc) => {
+              const isFrozen = acc.status === 'Frozen';
+              return (
+                <div
+                  key={acc.id}
+                  onClick={() => onNavigate('accounts')}
+                  className="p-3.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/70 transition-all cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                        isFrozen ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-[#002855]'
+                      }`}
+                    >
+                      {isFrozen ? <Lock className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
                     </div>
-                    <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>{acc.name}</span>
+                        {isFrozen ? (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            Inactive • Frozen
+                          </span>
+                        ) : acc.status === 'Transfers Temporarily Restricted' ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                            Restricted
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-right">
-                  <div className="text-xs font-bold font-mono text-slate-900">
-                    {hideBalance
-                      ? '••••••••'
-                      : `$${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                  <div className="text-right">
+                    <div className="text-xs font-bold font-mono text-slate-900">
+                      {hideBalance
+                        ? '••••••••'
+                        : acc.id === 'acc_checking_4821' && isFrozen
+                        ? '$0.00'
+                        : `$${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                    </div>
+                    <div className={`text-[10px] font-semibold ${isFrozen ? 'text-rose-600' : 'text-slate-400'}`}>
+                      {isFrozen ? 'Unavailable' : 'Available'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-400">Available</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 flex items-center justify-between">

@@ -33,9 +33,9 @@
       "routingNumber": "091000022",
       "routingNumberMasked": "•••• 9210",
       "type": "checking",
-      "status": "Transfers Temporarily Restricted",
+      "status": "Frozen",
       "currency": "USD",
-      "availableBalance": 3066370.46,
+      "availableBalance": 0.0,
       "ledgerBalance": 3386370.46,
       "openingBalance": 42500,
       "openedDate": "2021-01-05",
@@ -44,18 +44,20 @@
       "isPrimary": true,
       "restriction": {
         "restriction_active": true,
-        "status_label": "Transfers Temporarily Restricted",
-        "reason": "Additional account verification required",
+        "status_label": "Account Inactive & Frozen",
+        "reason": "Account deactivated and unavailable per customer instructions",
         "affected_services": [
-          "Outgoing bank transfers"
+          "Account availability",
+          "Outgoing bank transfers",
+          "Incoming bank transfers",
+          "Debit card purchases",
+          "All operations & transactions"
         ],
         "unaffected_services": [
-          "Account login",
-          "Transaction history viewing",
-          "Standard features"
+          "Historical statement viewing only"
         ],
-        "notification_message": "This transfer restriction is limited to this account. The bank must verify the account before outgoing transfers can resume.",
-        "resolution_instructions": "Contact or visit a bank branch with valid identification to complete the required verification."
+        "notification_message": "This account is unavailable, inactive, and frozen. All transfers into or out of this account are blocked.",
+        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
       }
     },
     {
@@ -66,7 +68,7 @@
       "routingNumber": "091000022",
       "routingNumberMasked": "•••• 9210",
       "type": "savings",
-      "status": "Active",
+      "status": "Frozen",
       "currency": "USD",
       "availableBalance": 486420.5,
       "ledgerBalance": 486420.5,
@@ -74,7 +76,23 @@
       "openedDate": "2021-03-12",
       "lastUpdated": "2026-10-18T19:35:33.368Z",
       "interestRate": 4.25,
-      "isPrimary": false
+      "isPrimary": false,
+      "restriction": {
+        "restriction_active": true,
+        "status_label": "Account Inactive & Frozen",
+        "reason": "Account deactivated per customer instructions",
+        "affected_services": [
+          "Outgoing bank transfers",
+          "Incoming bank transfers",
+          "Account withdrawals",
+          "All operations & transactions"
+        ],
+        "unaffected_services": [
+          "Historical statement viewing only"
+        ],
+        "notification_message": "This account is completely inactive and does not work. All transfers into or out of this account are blocked.",
+        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
+      }
     },
     {
       "id": "acc_credit_9920",
@@ -84,14 +102,31 @@
       "routingNumber": "091000022",
       "routingNumberMasked": "•••• 9210",
       "type": "credit",
-      "status": "Active",
+      "status": "Frozen",
       "currency": "USD",
       "availableBalance": 46850,
       "ledgerBalance": 3150,
       "openingBalance": 0,
       "openedDate": "2022-06-15",
       "lastUpdated": "2026-10-18T12:00:00.000Z",
-      "isPrimary": false
+      "isPrimary": false,
+      "restriction": {
+        "restriction_active": true,
+        "status_label": "Card & Account Inactive - Operations Disabled",
+        "reason": "Account and card deactivated per customer instructions",
+        "affected_services": [
+          "Card purchases",
+          "Outgoing bank transfers",
+          "Incoming transfers",
+          "Cash advances",
+          "All operations & transactions"
+        ],
+        "unaffected_services": [
+          "Historical statement viewing only"
+        ],
+        "notification_message": "This credit card and account are completely inactive and do not work. All operations and transfers are blocked.",
+        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
+      }
     }
   ],
   "transactions": [

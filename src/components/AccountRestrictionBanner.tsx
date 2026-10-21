@@ -40,35 +40,59 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
     return null;
   }
 
+  const isFrozen = account.status === 'Frozen';
+
   const restriction = account.restriction || {
     restriction_active: true,
-    status_label: 'Transfers Temporarily Restricted',
-    reason: 'Additional account verification required',
-    affected_services: ['Outgoing bank transfers are temporarily unavailable for this account.'],
-    unaffected_services: [
-      'Account login, transaction history, and other standard banking features remain accessible.',
-    ],
-    notification_message:
-      'This transfer restriction is limited specifically to this account. Additional verification is required by the bank before outgoing transfers can resume.',
-    resolution_instructions:
-      'Please contact customer support or visit your local branch with valid identification to complete the required verification process.',
+    status_label: isFrozen ? 'Account Inactive & Frozen' : 'Transfers Temporarily Restricted',
+    reason: isFrozen ? 'Account deactivated and unavailable per customer instructions' : 'Additional account verification required',
+    affected_services: isFrozen
+      ? ['Outgoing bank transfers', 'Incoming deposits', 'Debit card transactions', 'All operations & transactions']
+      : ['Outgoing bank transfers are temporarily unavailable for this account.'],
+    unaffected_services: isFrozen
+      ? ['Historical statement viewing only']
+      : ['Account login, transaction history, and other standard banking features remain accessible.'],
+    notification_message: isFrozen
+      ? 'This account has been deactivated and is unavailable. All outgoing and incoming transfers are completely blocked.'
+      : 'This transfer restriction is limited specifically to this account. Additional verification is required by the bank before outgoing transfers can resume.',
+    resolution_instructions: isFrozen
+      ? 'Transfers and operations are disabled for this account per customer instructions.'
+      : 'Please contact customer support or visit your local branch with valid identification to complete the required verification process.',
   };
 
   return (
     <>
       {/* Prominent Alert Banner at the top of the Account Dashboard */}
-      <div className="relative overflow-hidden rounded-2xl bg-amber-50/95 border-2 border-amber-300 shadow-md transition-all">
+      <div
+        className={`relative overflow-hidden rounded-2xl border-2 shadow-md transition-all ${
+          isFrozen ? 'bg-rose-50/95 border-rose-300' : 'bg-amber-50/95 border-amber-300'
+        }`}
+      >
         {/* Subtle patterned header strip */}
-        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 px-4 sm:px-6 py-2.5 text-white flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div
+          className={`px-4 sm:px-6 py-2.5 text-white flex flex-wrap items-center justify-between gap-2 text-xs ${
+            isFrozen
+              ? 'bg-gradient-to-r from-rose-700 via-rose-600 to-rose-700'
+              : 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600'
+          }`}
+        >
           <div className="flex items-center gap-2 font-bold tracking-wide">
-            <ShieldAlert className="w-4 h-4 text-amber-100 shrink-0" />
+            <ShieldAlert className="w-4 h-4 text-white shrink-0" />
             <span className="uppercase text-[11px] tracking-wider">Account Security Notice</span>
             <span className="opacity-60">•</span>
             <span>{account.name} ({account.accountNumberMasked})</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white text-amber-900 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-xs ${
+                isFrozen ? 'bg-white text-rose-900' : 'bg-white text-amber-900'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isFrozen ? 'bg-rose-600' : 'bg-amber-500 animate-pulse'
+                }`}
+              ></span>
               {restriction.status_label}
             </span>
           </div>
@@ -80,15 +104,27 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
             {/* Left Content */}
             <div className="space-y-3 flex-1">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5 border border-amber-200">
-                  <AlertTriangle className="w-5 h-5 text-amber-700" />
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 border ${
+                    isFrozen
+                      ? 'bg-rose-100 text-rose-800 border-rose-200'
+                      : 'bg-amber-100 text-amber-800 border-amber-200'
+                  }`}
+                >
+                  <AlertTriangle className={`w-5 h-5 ${isFrozen ? 'text-rose-700' : 'text-amber-700'}`} />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
                       Account Status: {restriction.status_label}
                     </h2>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                        isFrozen
+                          ? 'bg-rose-100 text-rose-800 border-rose-200'
+                          : 'bg-amber-100 text-amber-800 border-amber-200'
+                      }`}
+                    >
                       Reason: {restriction.reason}
                     </span>
                   </div>
@@ -108,7 +144,7 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
                       Affected Services
                     </div>
                     <div className="text-xs text-rose-800 mt-0.5 font-medium leading-snug">
-                      Outgoing bank transfers are temporarily unavailable for this account.
+                      {restriction.affected_services?.join(', ') || 'All account operations and transfers are disabled.'}
                     </div>
                   </div>
                 </div>
@@ -121,15 +157,19 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
                       Unaffected Services
                     </div>
                     <div className="text-xs text-emerald-800 mt-0.5 font-medium leading-snug">
-                      Account login, transaction history, and other standard banking features remain accessible.
+                      {restriction.unaffected_services?.join(', ') || 'Historical statement viewing only.'}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Resolution Instructions Text */}
-              <div className="flex items-start gap-2 text-xs text-slate-600 bg-white/70 p-3 rounded-xl border border-amber-200/60">
-                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div
+                className={`flex items-start gap-2 text-xs text-slate-600 bg-white/70 p-3 rounded-xl border ${
+                  isFrozen ? 'border-rose-200/60' : 'border-amber-200/60'
+                }`}
+              >
+                <Info className={`w-4 h-4 shrink-0 mt-0.5 ${isFrozen ? 'text-rose-600' : 'text-amber-600'}`} />
                 <div className="leading-relaxed">
                   <span className="font-bold text-slate-800">Resolution Instructions: </span>
                   {restriction.resolution_instructions}
@@ -141,10 +181,12 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
             <div className="flex lg:flex-col items-stretch justify-center gap-2 shrink-0 sm:min-w-[220px]">
               <button
                 onClick={() => setShowModal(true)}
-                className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+                className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white font-bold text-xs shadow-sm transition-colors cursor-pointer ${
+                  isFrozen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-amber-600 hover:bg-amber-700'
+                }`}
               >
                 <FileCheck className="w-4 h-4" />
-                <span>Verification Details</span>
+                <span>Security Notice Details</span>
               </button>
 
               {onSelectPendingTx && (
@@ -166,14 +208,24 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
+            <div
+              className={`px-6 py-5 text-white flex items-center justify-between ${
+                isFrozen
+                  ? 'bg-gradient-to-r from-rose-700 to-rose-800'
+                  : 'bg-gradient-to-r from-amber-600 to-amber-700'
+              }`}
+            >
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                   <ShieldAlert className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Account Verification Resolution</h3>
-                  <p className="text-[11px] text-amber-100">Step-by-step identity review procedure</p>
+                  <h3 className="text-base font-bold text-white">
+                    {isFrozen ? 'Account Deactivation & Security Notice' : 'Account Verification Resolution'}
+                  </h3>
+                  <p className="text-[11px] text-white/80">
+                    {isFrozen ? 'Official account status and service impact' : 'Step-by-step identity review procedure'}
+                  </p>
                 </div>
               </div>
               <button

@@ -105,19 +105,23 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
 
         {/* Account Selector Pill */}
         <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
-          {accounts.map((acc) => (
-            <button
-              key={acc.id}
-              onClick={() => setSelectedAccId(acc.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedAccId === acc.id
-                  ? 'bg-[#002855] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              {acc.name} ({acc.accountNumberMasked})
-            </button>
-          ))}
+          {accounts.map((acc) => {
+            const isFrozen = acc.status === 'Frozen';
+            return (
+              <button
+                key={acc.id}
+                onClick={() => setSelectedAccId(acc.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  selectedAccId === acc.id
+                    ? 'bg-[#002855] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {isFrozen && <Lock className="w-3 h-3 text-rose-500 shrink-0" />}
+                <span>{acc.name} ({acc.accountNumberMasked})</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -136,7 +140,12 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                 {currentAccount.type}
               </span>
               <span className="text-xs text-slate-300 font-medium">US Bank Relationship Tier</span>
-              {currentAccount.status === 'Transfers Temporarily Restricted' ? (
+              {currentAccount.status === 'Frozen' ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-300 font-bold bg-rose-500/20 px-2.5 py-0.5 rounded-full border border-rose-400/30">
+                  <Lock className="w-3 h-3 text-rose-400" />
+                  Account Inactive & Frozen
+                </span>
+              ) : currentAccount.status === 'Transfers Temporarily Restricted' ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-300 font-bold bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                   Transfers Temporarily Restricted
@@ -196,11 +205,16 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
             <div className="pt-2 flex flex-wrap items-baseline gap-6 sm:gap-10">
               <div>
                 <span className="text-[11px] uppercase tracking-wider text-slate-300 block font-semibold">
-                  Total Available Balance
+                  {currentAccount.status === 'Frozen' ? 'Available Balance (Unavailable)' : 'Total Available Balance'}
                 </span>
                 <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-0.5 block">
                   ${currentAccount.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
+                {currentAccount.status === 'Frozen' && (
+                  <span className="text-xs text-rose-300 font-semibold flex items-center gap-1 mt-1">
+                    <Lock className="w-3 h-3" /> Inactive • Transfers Disabled
+                  </span>
+                )}
               </div>
 
               <div>
@@ -230,12 +244,23 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
             </div>
 
             <div className="flex items-center gap-2.5">
-              <button
-                onClick={onNavigateToTransfers}
-                className="px-4 py-2.5 rounded-xl bg-white text-[#002855] text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm"
-              >
-                Transfer Funds
-              </button>
+              {currentAccount.status === 'Frozen' ? (
+                <button
+                  disabled
+                  className="px-4 py-2.5 rounded-xl bg-slate-300/20 text-slate-300 text-xs font-bold border border-white/10 cursor-not-allowed flex items-center gap-1.5 shadow-sm"
+                  title="Transfers are completely disabled for this account."
+                >
+                  <Lock className="w-3.5 h-3.5 text-rose-400" />
+                  Transfers Disabled
+                </button>
+              ) : (
+                <button
+                  onClick={onNavigateToTransfers}
+                  className="px-4 py-2.5 rounded-xl bg-white text-[#002855] text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm"
+                >
+                  Transfer Funds
+                </button>
+              )}
               <button
                 onClick={onNavigateToTransactions}
                 className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-colors"
