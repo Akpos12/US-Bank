@@ -231,6 +231,8 @@ export default function App() {
                 onNavigate={setCurrentTab}
                 onSelectTx={setActiveTxDetail}
                 onRefreshData={refreshAccountData}
+                onLogout={handleLogout}
+                onOpenHelp={() => setShowHelpModal(true)}
               />
             )}
 
@@ -250,6 +252,7 @@ export default function App() {
                 onNavigateToTransfers={() => setCurrentTab('transfers')}
                 onNavigateToTransactions={() => setCurrentTab('transactions')}
                 onSelectTx={setActiveTxDetail}
+                onRefreshAccounts={refreshAccountData}
               />
             )}
 
@@ -277,21 +280,8 @@ export default function App() {
 
           {/* Persistent Sub-Footer with Compliance & FDIC Badge */}
           <footer className="mt-auto py-5 px-6 border-t border-slate-200 bg-white text-slate-500 text-xs">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#002855]">US Bank</span>
-                <span>•</span>
-                <span>Justin Jefferson Premium Banking Session</span>
-                <span>•</span>
-                <span className="font-mono text-[11px]">ID: 10482</span>
-              </div>
-              <div className="flex items-center gap-4 text-[11px]">
-                <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5" /> FDIC Insured to Legal Limit
-                </span>
-                <span>Equal Housing Lender</span>
-                <span>Privacy & Security</span>
-              </div>
+            <div className="max-w-7xl mx-auto text-center font-medium">
+              Member FDIC | Equal Housing Lender © 2026 U.S. Bank
             </div>
           </footer>
         </div>

@@ -44,20 +44,17 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
 
   const restriction = account.restriction || {
     restriction_active: true,
-    status_label: isFrozen ? 'Account Inactive & Frozen' : 'Transfers Temporarily Restricted',
-    reason: isFrozen ? 'Account deactivated and unavailable per customer instructions' : 'Additional account verification required',
-    affected_services: isFrozen
-      ? ['Outgoing bank transfers', 'Incoming deposits', 'Debit card transactions', 'All operations & transactions']
-      : ['Outgoing bank transfers are temporarily unavailable for this account.'],
-    unaffected_services: isFrozen
-      ? ['Historical statement viewing only']
-      : ['Account login, transaction history, and other standard banking features remain accessible.'],
-    notification_message: isFrozen
-      ? 'This account has been deactivated and is unavailable. All outgoing and incoming transfers are completely blocked.'
-      : 'This transfer restriction is limited specifically to this account. Additional verification is required by the bank before outgoing transfers can resume.',
-    resolution_instructions: isFrozen
-      ? 'Transfers and operations are disabled for this account per customer instructions.'
-      : 'Please contact customer support or visit your local branch with valid identification to complete the required verification process.',
+    status_label: 'Account Locked',
+    reason: 'Additional branch verification required to lift security hold.',
+    affected_services: [
+      'Outgoing bank transfers',
+      'Incoming bank transfers',
+      'Debit card purchases',
+      'External withdrawals',
+    ],
+    unaffected_services: ['Historical statement viewing', 'Account balance review'],
+    notification_message: 'Transfers and outgoing debits are temporarily restricted pending in-person branch verification.',
+    resolution_instructions: 'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
   };
 
   return (

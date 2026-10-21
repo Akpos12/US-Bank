@@ -148,6 +148,23 @@ app.get('/api/accounts/:id', (req: Request, res: Response) => {
   return res.json(account);
 });
 
+app.patch('/api/accounts/:id/routing', (req: Request, res: Response) => {
+  try {
+    const { routingNumber, applyToAll } = req.body;
+    if (!routingNumber || typeof routingNumber !== 'string') {
+      return res.status(400).json({ error: 'Valid routing number is required' });
+    }
+    const cleanRouting = routingNumber.trim();
+    if (!/^\d{9}$/.test(cleanRouting)) {
+      return res.status(400).json({ error: 'Routing number must be a 9-digit number' });
+    }
+    const updated = ledgerService.updateAccountRouting(req.params.id, cleanRouting, !!applyToAll);
+    return res.json({ success: true, account: updated, accounts: ledgerService.getAccounts() });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Failed to update routing number' });
+  }
+});
+
 // --- Account Status & Transfer Restriction Endpoints ---
 app.get('/api/account/status', (req: Request, res: Response) => {
   const accountId = (req.query.accountId as string) || 'acc_checking_4821';

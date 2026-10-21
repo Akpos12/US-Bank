@@ -14,17 +14,57 @@ import {
   Lock,
   ArrowUpRight,
   ArrowDownLeft,
+  Edit3,
+  X,
+  AlertCircle,
+  CheckCircle2,
+  Building,
 } from 'lucide-react';
 import { Account, Transaction } from '../types/banking.ts';
 import { BalanceHistoryChart } from './BalanceHistoryChart.tsx';
 import { AccountRestrictionBanner } from './AccountRestrictionBanner.tsx';
 import { api } from '../services/api.ts';
 
+const USBANK_ROUTING_PRESETS = [
+  {
+    number: '091000022',
+    city: 'Minneapolis, MN',
+    region: 'U.S. Bank Headquarters & Private Wealth (Minneapolis / Nicollet Mall)',
+    recommended: true,
+  },
+  {
+    number: '071000288',
+    city: 'Chicago, IL',
+    region: 'U.S. Bank Midwest Banking Division (Chicago / IL)',
+  },
+  {
+    number: '042000013',
+    city: 'Cincinnati, OH',
+    region: 'U.S. Bank National Association Main (Cincinnati / OH)',
+  },
+  {
+    number: '102000021',
+    city: 'Denver, CO',
+    region: 'U.S. Bank Mountain Regional Center (Denver / CO)',
+  },
+  {
+    number: '121000249',
+    city: 'Los Angeles / San Francisco, CA',
+    region: 'U.S. Bank California & West Division',
+  },
+  {
+    number: '123000220',
+    city: 'Portland, OR / Seattle, WA',
+    region: 'U.S. Bank Pacific Northwest Center',
+  },
+];
+
 interface AccountOverviewProps {
   accounts: Account[];
   onNavigateToTransfers: () => void;
   onNavigateToTransactions: () => void;
   onSelectTx: (tx: Transaction) => void;
+  onRefreshAccounts?: () => Promise<void> | void;
 }
 
 export const AccountOverview: React.FC<AccountOverviewProps> = ({
@@ -32,12 +72,22 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
   onNavigateToTransfers,
   onNavigateToTransactions,
   onSelectTx,
+  onRefreshAccounts,
 }) => {
   const [selectedAccId, setSelectedAccId] = useState<string>(accounts[0]?.id || 'acc_checking_4821');
   const [showFullAccount, setShowFullAccount] = useState(false);
   const [showFullRouting, setShowFullRouting] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
   const [copiedRouting, setCopiedRouting] = useState(false);
+
+  // Change Routing Number Modal State
+  const [showRoutingModal, setShowRoutingModal] = useState(false);
+  const [selectedRoutingPreset, setSelectedRoutingPreset] = useState<string>('091000022');
+  const [customRoutingInput, setCustomRoutingInput] = useState<string>('');
+  const [applyToAllAccounts, setApplyToAllAccounts] = useState(true);
+  const [isUpdatingRouting, setIsUpdatingRouting] = useState(false);
+  const [routingUpdateSuccess, setRoutingUpdateSuccess] = useState<string | null>(null);
+  const [routingUpdateError, setRoutingUpdateError] = useState<string | null>(null);
 
   // Balance history state
   const [chartRange, setChartRange] = useState('30D');
@@ -48,6 +98,55 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
   const [recentTxs, setRecentTxs] = useState<Transaction[]>([]);
 
   const currentAccount = accounts.find((a) => a.id === selectedAccId) || accounts[0];
+
+  const handleOpenRoutingModal = () => {
+    const cur = currentAccount.routingNumber;
+    const isPreset = USBANK_ROUTING_PRESETS.some((p) => p.number === cur);
+    if (isPreset) {
+      setSelectedRoutingPreset(cur);
+      setCustomRoutingInput('');
+    } else {
+      setSelectedRoutingPreset('custom');
+      setCustomRoutingInput(cur);
+    }
+    setRoutingUpdateSuccess(null);
+    setRoutingUpdateError(null);
+    setShowRoutingModal(true);
+  };
+
+  const handleSaveRouting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingRouting(true);
+    setRoutingUpdateError(null);
+    setRoutingUpdateSuccess(null);
+
+    const targetRouting =
+      selectedRoutingPreset === 'custom'
+        ? customRoutingInput.trim()
+        : selectedRoutingPreset;
+
+    if (!/^\d{9}$/.test(targetRouting)) {
+      setRoutingUpdateError('Routing number must contain exactly 9 numeric digits.');
+      setIsUpdatingRouting(false);
+      return;
+    }
+
+    try {
+      await api.updateAccountRouting(currentAccount.id, targetRouting, applyToAllAccounts);
+      setRoutingUpdateSuccess(`Routing transit number successfully updated to ${targetRouting}`);
+      if (onRefreshAccounts) {
+        await onRefreshAccounts();
+      }
+      setTimeout(() => {
+        setShowRoutingModal(false);
+        setRoutingUpdateSuccess(null);
+      }, 1800);
+    } catch (err: any) {
+      setRoutingUpdateError(err.message || 'Failed to update routing number.');
+    } finally {
+      setIsUpdatingRouting(false);
+    }
+  };
 
   const fetchChart = async (range: string) => {
     setChartLoading(true);
@@ -196,6 +295,14 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                   </button>
                   <button onClick={copyRoutingNum} className="p-1 hover:text-white text-slate-400" title="Copy">
                     {copiedRouting ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={handleOpenRoutingModal}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white transition-colors text-[11px] font-semibold border border-white/20 ml-1.5 cursor-pointer"
+                    title="Change routing number for Justin Jefferson"
+                  >
+                    <Edit3 className="w-3 h-3 text-amber-300" />
+                    <span>Change</span>
                   </button>
                 </div>
               </div>
@@ -357,6 +464,188 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
           })}
         </div>
       </div>
+
+      {/* Change Routing Number Modal */}
+      {showRoutingModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 text-slate-800 space-y-5 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#002855] flex items-center justify-center font-black">
+                  <Building className="w-5 h-5 text-[#002855]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Change Account Routing Number</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Client: <strong>Justin Jefferson</strong> • {currentAccount.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRoutingModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Current Routing Summary */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+              <div>
+                <span className="text-slate-400 text-[11px] block">Current Routing Number:</span>
+                <span className="font-mono font-bold text-slate-900 text-sm">{currentAccount.routingNumber}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-400 text-[11px] block">Account Number:</span>
+                <span className="font-mono font-bold text-slate-700">{currentAccount.accountNumberMasked}</span>
+              </div>
+            </div>
+
+            {routingUpdateSuccess && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{routingUpdateSuccess}</span>
+              </div>
+            )}
+
+            {routingUpdateError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{routingUpdateError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveRouting} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
+                  Select U.S. Bank Routing Transit Number
+                </label>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {USBANK_ROUTING_PRESETS.map((preset) => {
+                    const isSelected = selectedRoutingPreset === preset.number;
+                    return (
+                      <label
+                        key={preset.number}
+                        className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-blue-50/70 border-[#002855] text-slate-900 shadow-xs ring-1 ring-[#002855]'
+                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="routingPreset"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedRoutingPreset(preset.number);
+                            setCustomRoutingInput('');
+                          }}
+                          className="mt-0.5 text-[#002855] focus:ring-[#002855]"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono font-extrabold text-[#002855] text-sm">
+                              {preset.number}
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              {preset.city}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                            {preset.region}
+                          </p>
+                          {preset.recommended && (
+                            <span className="inline-block mt-1 px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              Primary Headquarters & Concierge Branch
+                            </span>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+
+                  {/* Custom Option */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                      selectedRoutingPreset === 'custom'
+                        ? 'bg-blue-50/70 border-[#002855] text-slate-900 shadow-xs ring-1 ring-[#002855]'
+                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="routingPreset"
+                      checked={selectedRoutingPreset === 'custom'}
+                      onChange={() => setSelectedRoutingPreset('custom')}
+                      className="mt-0.5 text-[#002855] focus:ring-[#002855]"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-slate-900 block">Custom 9-Digit Routing Number</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Manually enter a custom ABA 9-digit routing transit code
+                      </p>
+                      {selectedRoutingPreset === 'custom' && (
+                        <div className="mt-2.5">
+                          <input
+                            type="text"
+                            maxLength={9}
+                            value={customRoutingInput}
+                            onChange={(e) => setCustomRoutingInput(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Enter 9 digits (e.g. 091000022)"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#002855] font-mono text-sm tracking-widest text-slate-900"
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Apply to All Accounts Checkbox */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="flex items-center gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applyToAllAccounts}
+                    onChange={(e) => setApplyToAllAccounts(e.target.checked)}
+                    className="rounded text-[#002855] focus:ring-[#002855] w-4 h-4"
+                  />
+                  <span>Apply updated routing number to all Justin Jefferson accounts</span>
+                </label>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowRoutingModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingRouting}
+                  className="px-5 py-2.5 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isUpdatingRouting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Update Routing Number</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

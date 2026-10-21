@@ -18,6 +18,8 @@ import {
   ChevronRight,
   RefreshCw,
   Lock,
+  HelpCircle,
+  LogOut,
 } from 'lucide-react';
 import { Account, Customer, Transaction } from '../types/banking.ts';
 import { BalanceHistoryChart } from './BalanceHistoryChart.tsx';
@@ -31,6 +33,8 @@ interface DashboardProps {
   onNavigate: (tab: string) => void;
   onSelectTx: (tx: Transaction) => void;
   onRefreshData: () => void;
+  onLogout?: () => void;
+  onOpenHelp?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -39,6 +43,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   onSelectTx,
   onRefreshData,
+  onLogout,
+  onOpenHelp,
 }) => {
   const [hideBalance, setHideBalance] = useState(false);
   const [chartRange, setChartRange] = useState('30D');
@@ -277,28 +283,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Quick Actions Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-700 mr-2 uppercase tracking-wider">Quick Actions:</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-slate-700 mr-2 uppercase tracking-wider">Quick Links:</span>
           <button
             onClick={() => onNavigate('transfers')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#002855] text-xs font-bold transition-colors"
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
-            Transfer Funds
-          </button>
-          <button
-            onClick={() => onNavigate('transfers')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors"
-          >
-            <Send className="w-3.5 h-3.5 text-blue-600" />
-            Send via Zelle
+            Transfers
           </button>
           <button
             onClick={() => onNavigate('statements')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors"
           >
-            <FileText className="w-3.5 h-3.5" />
-            eStatements
+            <FileText className="w-3.5 h-3.5 text-blue-600" />
+            Statements & Documents
+          </button>
+          <button
+            onClick={() => onOpenHelp && onOpenHelp()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
+            Customer Service
+          </button>
+          <button
+            onClick={() => onLogout && onLogout()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-semibold transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-600" />
+            Log Out
           </button>
         </div>
 

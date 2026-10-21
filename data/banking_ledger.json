@@ -31,11 +31,11 @@
       "accountNumber": "1048214821",
       "accountNumberMasked": "•••• 4821",
       "routingNumber": "091000022",
-      "routingNumberMasked": "•••• 9210",
+      "routingNumberMasked": "•••• 0022",
       "type": "checking",
       "status": "Frozen",
       "currency": "USD",
-      "availableBalance": 0.0,
+      "availableBalance": 0,
       "ledgerBalance": 3386370.46,
       "openingBalance": 42500,
       "openedDate": "2021-01-05",
@@ -44,20 +44,21 @@
       "isPrimary": true,
       "restriction": {
         "restriction_active": true,
-        "status_label": "Account Inactive & Frozen",
-        "reason": "Account deactivated and unavailable per customer instructions",
+        "status_label": "Account Locked",
+        "reason": "Additional branch verification required to lift security hold.",
         "affected_services": [
-          "Account availability",
           "Outgoing bank transfers",
           "Incoming bank transfers",
           "Debit card purchases",
-          "All operations & transactions"
+          "External withdrawals"
         ],
         "unaffected_services": [
-          "Historical statement viewing only"
+          "Historical statement viewing",
+          "Account balance review",
+          "Document access"
         ],
-        "notification_message": "This account is unavailable, inactive, and frozen. All transfers into or out of this account are blocked.",
-        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
+        "notification_message": "Transfers and outgoing debits are temporarily restricted pending in-person branch verification.",
+        "resolution_instructions": "Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold."
       }
     },
     {
@@ -66,7 +67,7 @@
       "accountNumber": "1048216194",
       "accountNumberMasked": "•••• 6194",
       "routingNumber": "091000022",
-      "routingNumberMasked": "•••• 9210",
+      "routingNumberMasked": "•••• 0022",
       "type": "savings",
       "status": "Frozen",
       "currency": "USD",
@@ -79,19 +80,19 @@
       "isPrimary": false,
       "restriction": {
         "restriction_active": true,
-        "status_label": "Account Inactive & Frozen",
-        "reason": "Account deactivated per customer instructions",
+        "status_label": "Account Locked",
+        "reason": "Additional branch verification required to lift security hold.",
         "affected_services": [
           "Outgoing bank transfers",
           "Incoming bank transfers",
-          "Account withdrawals",
-          "All operations & transactions"
+          "Account withdrawals"
         ],
         "unaffected_services": [
-          "Historical statement viewing only"
+          "Historical statement viewing",
+          "Interest accrual review"
         ],
-        "notification_message": "This account is completely inactive and does not work. All transfers into or out of this account are blocked.",
-        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
+        "notification_message": "Transfers and outgoing debits are temporarily restricted pending in-person branch verification.",
+        "resolution_instructions": "Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold."
       }
     },
     {
@@ -100,7 +101,7 @@
       "accountNumber": "400012349920",
       "accountNumberMasked": "•••• 9920",
       "routingNumber": "091000022",
-      "routingNumberMasked": "•••• 9210",
+      "routingNumberMasked": "•••• 0022",
       "type": "credit",
       "status": "Frozen",
       "currency": "USD",
@@ -112,20 +113,18 @@
       "isPrimary": false,
       "restriction": {
         "restriction_active": true,
-        "status_label": "Card & Account Inactive - Operations Disabled",
-        "reason": "Account and card deactivated per customer instructions",
+        "status_label": "Temporary Security Hold",
+        "reason": "Additional branch verification required to lift security hold.",
         "affected_services": [
           "Card purchases",
           "Outgoing bank transfers",
-          "Incoming transfers",
-          "Cash advances",
-          "All operations & transactions"
+          "Cash advances"
         ],
         "unaffected_services": [
-          "Historical statement viewing only"
+          "Historical statement viewing"
         ],
-        "notification_message": "This credit card and account are completely inactive and do not work. All operations and transfers are blocked.",
-        "resolution_instructions": "Transfers and operations are disabled for this account per customer instructions."
+        "notification_message": "Transfers and outgoing debits are temporarily restricted pending in-person branch verification.",
+        "resolution_instructions": "Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold."
       }
     }
   ],

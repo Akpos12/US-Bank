@@ -13,55 +13,51 @@ import {
 
 const DEFAULT_ACCOUNT_RESTRICTION: AccountRestriction = {
   restriction_active: true,
-  status_label: 'Account Inactive & Frozen',
-  reason: 'Account deactivated and unavailable per customer instructions',
+  status_label: 'Account Locked',
+  reason: 'Additional branch verification required to lift security hold.',
   affected_services: [
-    'Account availability',
     'Outgoing bank transfers',
     'Incoming bank transfers',
     'Debit card purchases',
-    'All operations & transactions',
+    'External withdrawals',
   ],
-  unaffected_services: ['Historical statement viewing only'],
+  unaffected_services: ['Historical statement viewing', 'Account balance review', 'Document access'],
   notification_message:
-    'This account is unavailable, inactive, and frozen. All transfers into or out of this account are blocked.',
+    'Transfers and outgoing debits are temporarily restricted pending in-person branch verification.',
   resolution_instructions:
-    'Transfers and operations are disabled for this account per customer instructions.',
+    'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
 };
 
 const SAVINGS_ACCOUNT_RESTRICTION: AccountRestriction = {
   restriction_active: true,
-  status_label: 'Account Inactive & Frozen',
-  reason: 'Account deactivated per customer instructions',
+  status_label: 'Account Locked',
+  reason: 'Additional branch verification required to lift security hold.',
   affected_services: [
     'Outgoing bank transfers',
     'Incoming bank transfers',
     'Account withdrawals',
-    'All operations & transactions',
   ],
-  unaffected_services: ['Historical statement viewing only'],
+  unaffected_services: ['Historical statement viewing', 'Interest accrual review'],
   notification_message:
-    'This account is completely inactive and does not work. All transfers into or out of this account are blocked.',
+    'Transfers and outgoing debits are temporarily restricted pending in-person branch verification.',
   resolution_instructions:
-    'Transfers and operations are disabled for this account per customer instructions.',
+    'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
 };
 
 const CREDIT_ACCOUNT_RESTRICTION: AccountRestriction = {
   restriction_active: true,
-  status_label: 'Card & Account Inactive - Operations Disabled',
-  reason: 'Account and card deactivated per customer instructions',
+  status_label: 'Temporary Security Hold',
+  reason: 'Additional branch verification required to lift security hold.',
   affected_services: [
     'Card purchases',
     'Outgoing bank transfers',
-    'Incoming transfers',
     'Cash advances',
-    'All operations & transactions',
   ],
-  unaffected_services: ['Historical statement viewing only'],
+  unaffected_services: ['Historical statement viewing'],
   notification_message:
-    'This credit card and account are completely inactive and do not work. All operations and transfers are blocked.',
+    'Transfers and outgoing debits are temporarily restricted pending in-person branch verification.',
   resolution_instructions:
-    'Transfers and operations are disabled for this account per customer instructions.',
+    'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
 };
 
 const LOCAL_STORAGE_KEY = 'usbank_local_ledger_state_v2';
@@ -109,7 +105,7 @@ function getInitialState(): LocalState {
       accountNumber: '1048214821',
       accountNumberMasked: '•••• 4821',
       routingNumber: '091000022',
-      routingNumberMasked: '•••• 9210',
+      routingNumberMasked: '•••• 0022',
       type: 'checking',
       status: 'Frozen',
       currency: 'USD',
@@ -128,7 +124,7 @@ function getInitialState(): LocalState {
       accountNumber: '1048216194',
       accountNumberMasked: '•••• 6194',
       routingNumber: '091000022',
-      routingNumberMasked: '•••• 9210',
+      routingNumberMasked: '•••• 0022',
       type: 'savings',
       status: 'Frozen',
       currency: 'USD',
@@ -147,7 +143,7 @@ function getInitialState(): LocalState {
       accountNumber: '400012349920',
       accountNumberMasked: '•••• 9920',
       routingNumber: '091000022',
-      routingNumberMasked: '•••• 9210',
+      routingNumberMasked: '•••• 0022',
       type: 'credit',
       status: 'Frozen',
       currency: 'USD',
@@ -386,6 +382,15 @@ class LocalLedgerService {
           crd.availableBalance = 46850.0;
           crd.restriction = CREDIT_ACCOUNT_RESTRICTION;
         }
+
+        // Migrate routing numbers to Minneapolis HQ 091000022
+        parsed.accounts?.forEach((acc: Account) => {
+          if (!acc.routingNumber || acc.routingNumber === '071000288' || acc.routingNumberMasked === '•••• 0288') {
+            acc.routingNumber = '091000022';
+            acc.routingNumberMasked = '•••• 0022';
+          }
+        });
+
         return parsed;
       }
     } catch {
@@ -404,11 +409,43 @@ class LocalLedgerService {
     }
   }
 
+  public getAccounts(): Account[] {
+    return this.state.accounts;
+  }
+
+  public updateAccountRouting(accountId: string, newRoutingNumber: string, applyToAll: boolean = false): Account {
+    const trimmed = newRoutingNumber.trim();
+    const masked = `•••• ${trimmed.slice(-4)}`;
+    if (applyToAll || accountId === 'all') {
+      this.state.accounts.forEach((acc) => {
+        acc.routingNumber = trimmed;
+        acc.routingNumberMasked = masked;
+      });
+    } else {
+      const acc = this.state.accounts.find((a) => a.id === accountId);
+      if (acc) {
+        acc.routingNumber = trimmed;
+        acc.routingNumberMasked = masked;
+      }
+    }
+    this.saveState();
+    return this.state.accounts.find((a) => a.id === accountId) || this.state.accounts[0];
+  }
+
   public handleFallback(endpoint: string, options: RequestInit = {}): any {
     const url = new URL(endpoint, 'http://localhost');
     const path = url.pathname;
     const method = (options.method || 'GET').toUpperCase();
     const body = options.body ? JSON.parse(options.body as string) : {};
+
+    // Routing patch route
+    if (path.startsWith('/api/accounts/') && path.endsWith('/routing') && method === 'PATCH') {
+      const parts = path.split('/');
+      const accId = parts[3];
+      const { routingNumber, applyToAll } = body;
+      const updated = this.updateAccountRouting(accId, routingNumber, !!applyToAll);
+      return { success: true, account: updated, accounts: this.state.accounts };
+    }
 
     // Auth Login
     if (path === '/api/auth/login' && method === 'POST') {

@@ -134,6 +134,16 @@ export const api = {
     return this.request<Account>(`/api/accounts/${id}`);
   },
 
+  async updateAccountRouting(accountId: string, routingNumber: string, applyToAll: boolean = true) {
+    return this.request<{ success: boolean; account: Account; accounts: Account[] }>(
+      `/api/accounts/${accountId}/routing`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ routingNumber, applyToAll }),
+      }
+    );
+  },
+
   async getTransactions(params: Record<string, string | number | undefined> = {}) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
