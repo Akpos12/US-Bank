@@ -15,7 +15,10 @@ import {
   CreditCard,
   FileCheck,
   Lock,
-  Ban,
+  Smartphone,
+  Receipt,
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Account, Payee, TransferRequest, Transaction } from '../types/banking.ts';
@@ -27,23 +30,30 @@ interface TransfersPageProps {
 }
 
 export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransferSuccess }) => {
+  const [activeTab, setActiveTab] = useState<'internal' | 'billpay' | 'zelle'>('internal');
   const [payees, setPayees] = useState<Payee[]>([]);
   const [step, setStep] = useState<'form' | 'review' | 'confirmed'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter eligible accounts: checking is primary, while savings 6194 and credit 9920 are completely inactive/frozen
-  const activeCheckingAccount = accounts.find((a) => a.id === 'acc_checking_4821') || accounts[0];
+  // Accounts
+  const primaryChecking = accounts.find((a) => a.id === 'acc_checking_4821') || accounts[0];
+  const savingsAccount = accounts.find((a) => a.id === 'acc_savings_6194') || accounts[1];
+  const creditCardAccount = accounts.find((a) => a.id === 'acc_credit_9920') || accounts[2];
 
-  // Form Fields
-  const [fromAccountId, setFromAccountId] = useState<string>(activeCheckingAccount?.id || 'acc_checking_4821');
-  const [transferType, setTransferType] = useState<'internal' | 'payee'>('payee');
-  const [toAccountId, setToAccountId] = useState<string>('');
+  // Transfer Fields
+  const [fromAccountId, setFromAccountId] = useState<string>(primaryChecking?.id || 'acc_checking_4821');
+  const [toAccountId, setToAccountId] = useState<string>(savingsAccount?.id || '');
   const [toPayeeId, setToPayeeId] = useState<string>('');
+  const [zelleRecipient, setZelleRecipient] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [speed, setSpeed] = useState<'standard' | 'instant'>('instant');
   const [transferDate, setTransferDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  // Bill Pay Fields
+  const [selectedBiller, setSelectedBiller] = useState<string>('Xcel Energy');
+  const [billerAccountNumber, setBillerAccountNumber] = useState<string>('5421-9920-1123');
 
   // Add Payee Modal
   const [showAddPayeeModal, setShowAddPayeeModal] = useState(false);
@@ -81,31 +91,20 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
   const fromAccount = accounts.find((a) => a.id === fromAccountId) || accounts[0];
   const toAccount = accounts.find((a) => a.id === toAccountId);
   const selectedPayee = payees.find((p) => p.id === toPayeeId);
-
   const numAmount = parseFloat(amount) || 0;
 
-  const handleQuickAmount = (val: number) => {
-    setAmount(String(val));
-  };
+  const isOriginRestricted =
+    fromAccount?.status === 'Transfers Temporarily Restricted' ||
+    fromAccount?.restriction?.restriction_active;
 
   const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (
-      fromAccount?.id === 'acc_savings_6194' ||
-      fromAccount?.id === 'acc_credit_9920' ||
-      fromAccount?.status === 'Frozen'
-    ) {
+    // If attempting to transfer from an account under branch security hold
+    if (isOriginRestricted) {
       setError(
-        `Transfers and withdrawals are completely disabled for ${fromAccount.name} (${fromAccount.accountNumberMasked}). This account is inactive and frozen per security instructions.`
-      );
-      return;
-    }
-
-    if (fromAccount?.status === 'Transfers Temporarily Restricted' || fromAccount?.restriction?.restriction_active) {
-      setError(
-        'Outgoing bank transfers are temporarily unavailable for this account due to additional account verification required. Please contact customer support or visit your local branch with valid identification to complete the required verification process.'
+        'Transfers and outgoing debits are temporarily restricted pending identity verification. Please visit your local U.S. Bank branch with valid government-issued photo ID to verify your identity and complete verification.'
       );
       return;
     }
@@ -122,7 +121,7 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
 
     if (fromAccount.availableBalance < numAmount) {
       setError(
-        `Insufficient funds. Available balance in ${fromAccount.name} is $${fromAccount.availableBalance.toLocaleString(
+        `Insufficient available funds. Available balance in ${fromAccount.name} is $${fromAccount.availableBalance.toLocaleString(
           'en-US',
           { minimumFractionDigits: 2 }
         )}.`
@@ -130,29 +129,24 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
       return;
     }
 
-    if (transferType === 'internal') {
+    if (activeTab === 'internal') {
       if (!toAccountId) {
-        setError('Please select a valid destination account.');
+        setError('Please select a destination account.');
         return;
       }
       if (fromAccountId === toAccountId) {
-        setError('Origin and destination accounts cannot be identical.');
-        return;
-      }
-      if (
-        toAccount?.id === 'acc_savings_6194' ||
-        toAccount?.id === 'acc_credit_9920' ||
-        toAccount?.status === 'Frozen'
-      ) {
-        setError(
-          `Transfers to ${toAccount?.name || 'this account'} (${toAccount?.accountNumberMasked || ''}) are completely disabled. The destination account is inactive and frozen.`
-        );
+        setError('Funding and destination accounts cannot be the same.');
         return;
       }
     }
 
-    if (transferType === 'payee' && !toPayeeId) {
-      setError('Please select or add an authorized recipient payee.');
+    if (activeTab === 'billpay' && !selectedBiller) {
+      setError('Please choose a registered payee / utility provider.');
+      return;
+    }
+
+    if (activeTab === 'zelle' && !zelleRecipient.trim()) {
+      setError('Please provide a valid U.S. mobile number or email address registered with Zelle®.');
       return;
     }
 
@@ -164,13 +158,21 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
     setError(null);
 
     try {
+      const desc =
+        description.trim() ||
+        (activeTab === 'internal'
+          ? `Internal Transfer to ${toAccount?.name}`
+          : activeTab === 'zelle'
+          ? `Zelle® payment to ${zelleRecipient}`
+          : `Bill Pay to ${selectedBiller}`);
+
       const req: TransferRequest = {
         fromAccountId,
-        toType: transferType,
-        toAccountId: transferType === 'internal' ? toAccountId : undefined,
-        toPayeeId: transferType === 'payee' ? toPayeeId : undefined,
+        toType: activeTab === 'internal' ? 'internal' : 'payee',
+        toAccountId: activeTab === 'internal' ? toAccountId : undefined,
+        toPayeeId: activeTab === 'internal' ? undefined : toPayeeId,
         amount: numAmount,
-        description: description.trim() || (transferType === 'internal' ? `Transfer to ${toAccount?.name}` : `Payment to ${selectedPayee?.name}`),
+        description: desc,
         category: 'Transfer',
         transferDate,
         speed,
@@ -181,43 +183,17 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
       setStep('confirmed');
       onTransferSuccess();
 
-      // Confetti burst for successful authentic money movement
       confetti({
-        particleCount: 80,
+        particleCount: 70,
         spread: 60,
         origin: { y: 0.6 },
-        colors: ['#002855', '#2563eb', '#10b981', '#f59e0b'],
+        colors: ['#0C2340', '#005A9C', '#7414CA', '#10B981'],
       });
     } catch (err: any) {
-      setError(err.message || 'Transfer failed to process. Please try again.');
+      setError(err.message || 'Transfer failed to process. Please check branch verification instructions.');
       setStep('form');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreatePayee = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPayeeName || !newPayeeBank || !newPayeeAccNum || !newPayeeRouting) return;
-    setAddPayeeLoading(true);
-    try {
-      const res = await api.addPayee({
-        name: newPayeeName,
-        bankName: newPayeeBank,
-        accountNumber: newPayeeAccNum,
-        routingNumber: newPayeeRouting,
-      });
-      setPayees((prev) => [...prev, res.payee]);
-      setToPayeeId(res.payee.id);
-      setShowAddPayeeModal(false);
-      setNewPayeeName('');
-      setNewPayeeBank('');
-      setNewPayeeAccNum('');
-      setNewPayeeRouting('');
-    } catch (err: any) {
-      setAddPayeeError(err.message || 'Failed to add verified payee. Please check routing and account details.');
-    } finally {
-      setAddPayeeLoading(false);
     }
   };
 
@@ -230,727 +206,390 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Title */}
+      {/* Top Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Transfers & Payments</h1>
+        <h1 className="text-2xl font-extrabold text-[#0C2340] tracking-tight">Transfer & Pay Hub</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Secure ACH and real-time internal fund transfers with instantaneous ledger posting.
+          Move funds securely with U.S. Bank real-time internal transfers, electronic Bill Pay, and Send Money with Zelle®.
         </p>
       </div>
 
-      {/* Progress Wizard Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-6 text-xs font-semibold">
-          <div
-            className={`flex items-center gap-2 ${
-              step === 'form' ? 'text-[#002855] font-bold' : 'text-slate-400'
-            }`}
-          >
-            <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step === 'form' ? 'bg-[#002855] text-white' : 'bg-slate-200 text-slate-600'
-              }`}
-            >
-              1
-            </span>
-            <span>Configure Transfer</span>
-          </div>
+      {/* Main Tabs matching U.S. Bank Architecture */}
+      <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+        <button
+          onClick={() => {
+            setActiveTab('internal');
+            setStep('form');
+            setError(null);
+          }}
+          className={`py-3 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'internal'
+              ? 'bg-white text-[#0C2340] shadow-sm ring-1 ring-slate-200/80'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <ArrowRightLeft className="w-4 h-4 text-[#005A9C]" />
+          <span>Internal Transfers</span>
+        </button>
 
-          <div
-            className={`flex items-center gap-2 ${
-              step === 'review' ? 'text-[#002855] font-bold' : 'text-slate-400'
-            }`}
-          >
-            <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step === 'review' ? 'bg-[#002855] text-white' : 'bg-slate-200 text-slate-600'
-              }`}
-            >
-              2
-            </span>
-            <span>Review & Authorization</span>
-          </div>
+        <button
+          onClick={() => {
+            setActiveTab('billpay');
+            setStep('form');
+            setError(null);
+          }}
+          className={`py-3 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'billpay'
+              ? 'bg-white text-[#0C2340] shadow-sm ring-1 ring-slate-200/80'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Receipt className="w-4 h-4 text-[#005A9C]" />
+          <span>Pay Bills (Bill Pay)</span>
+        </button>
 
-          <div
-            className={`flex items-center gap-2 ${
-              step === 'confirmed' ? 'text-emerald-700 font-bold' : 'text-slate-400'
-            }`}
-          >
-            <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                step === 'confirmed' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-              }`}
-            >
-              3
-            </span>
-            <span>Confirmation</span>
-          </div>
-        </div>
+        <button
+          onClick={() => {
+            setActiveTab('zelle');
+            setStep('form');
+            setError(null);
+          }}
+          className={`py-3 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'zelle'
+              ? 'bg-[#7414CA] text-white shadow-md'
+              : 'text-slate-600 hover:text-[#7414CA]'
+          }`}
+        >
+          <span className="font-black text-sm bg-white/20 w-5 h-5 rounded-full flex items-center justify-center leading-none">
+            z
+          </span>
+          <span>Send Money with Zelle®</span>
+        </button>
       </div>
 
-      {error && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-3 animate-fade-in">
-          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Transaction Authorization Error</p>
-            <p className="mt-0.5">{error}</p>
+      {/* Origin Account Status Notice if Restricted */}
+      {isOriginRestricted && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-3 shadow-xs">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-sm">Account Locked — Temporary Security Hold</div>
+            <p className="leading-relaxed">
+              Transfers and outgoing debits for <strong>{fromAccount?.name} ({fromAccount?.accountNumberMasked})</strong> are temporarily restricted pending identity verification.
+            </p>
+            <p className="font-semibold text-amber-800">
+              Please visit your local U.S. Bank branch with valid government-issued photo ID to complete verification and remove restrictions.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Frozen / Inactive Account Transfer Restriction Notice */}
-      {(fromAccount?.status === 'Frozen' || fromAccount?.id === 'acc_savings_6194' || fromAccount?.id === 'acc_credit_9920') && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-slate-800 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center shrink-0 border border-rose-200 mt-0.5">
-              <Lock className="w-5 h-5 text-rose-700" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-extrabold text-sm text-slate-900">
-                  Account Status: Inactive & Frozen
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-200 text-rose-900">
-                  All Operations & Transfers Disabled
-                </span>
-              </div>
-              <p className="text-xs text-slate-700 mt-1 font-medium leading-relaxed">
-                This account ({fromAccount.name} {fromAccount.accountNumberMasked}) is completely inactive and does not work. All outgoing and incoming transfers are permanently disabled.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Account Transfer Restriction Notice */}
-      {fromAccount?.status === 'Transfers Temporarily Restricted' && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-slate-800 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200 mt-0.5">
-              <ShieldCheck className="w-5 h-5 text-amber-700" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-extrabold text-sm text-slate-900">
-                  Account Status: Transfers Temporarily Restricted
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">
-                  Additional Verification Required
-                </span>
-              </div>
-              <p className="text-xs text-slate-700 mt-1 font-medium leading-relaxed">
-                This transfer restriction is limited specifically to this account. Additional verification is required by the bank before outgoing transfers can resume.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
-            <div className="p-3 rounded-xl bg-rose-50/90 border border-rose-200 text-rose-900">
-              <div className="font-bold text-[11px] uppercase tracking-wider text-rose-800">Affected Services</div>
-              <div className="mt-0.5 text-xs font-medium">Outgoing bank transfers are temporarily unavailable for this account.</div>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-900">
-              <div className="font-bold text-[11px] uppercase tracking-wider text-emerald-800">Unaffected Services</div>
-              <div className="mt-0.5 text-xs font-medium">Account login, transaction history, and other standard banking features remain accessible.</div>
-            </div>
-          </div>
-
-          <div className="text-xs text-slate-700 bg-white/90 p-3 rounded-xl border border-amber-200 leading-relaxed">
-            <span className="font-bold text-slate-900">Resolution Action: </span>
-            Please contact customer support or visit your local branch with valid identification to complete the required verification process.
-          </div>
-        </div>
-      )}
-
-      {/* STEP 1: FORM */}
-      {step === 'form' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-6">
+      {/* Main Form Card */}
+      <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8">
+        {step === 'form' && (
           <form onSubmit={handleProceedToReview} className="space-y-6">
-            {/* Origin & Destination Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* From Account */}
+            {error && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="font-medium leading-relaxed">{error}</div>
+              </div>
+            )}
+
+            {/* ZELLE BRAND HEADER BANNER IF ZELLE TAB ACTIVE */}
+            {activeTab === 'zelle' && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#7414CA] to-[#540899] text-white text-xs flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white text-[#7414CA] flex items-center justify-center font-black text-lg shadow-xs">
+                    z
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">Send Money with Zelle®</div>
+                    <div className="text-purple-200 text-[11px]">
+                      Fast, safe and easy way to send money in minutes
+                    </div>
+                  </div>
+                </div>
+                <span className="hidden sm:inline-block px-2.5 py-1 rounded-full bg-white/15 text-white text-[10px] font-bold">
+                  Instant ACH Clearance
+                </span>
+              </div>
+            )}
+
+            {/* From Account Field */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Pay From (Funding Account)
+              </label>
+              <select
+                value={fromAccountId}
+                onChange={(e) => setFromAccountId(e.target.value)}
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+              >
+                {accounts.map((acc) => {
+                  const isCurRestricted =
+                    acc.status === 'Transfers Temporarily Restricted' ||
+                    acc.restriction?.restriction_active;
+                  return (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.accountNumberMasked}) — Available:{' '}
+                      {isCurRestricted ? '$0.00 (Locked)' : `$${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Destination Selection based on Active Tab */}
+            {activeTab === 'internal' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  From Account (Funding Source)
+                  Transfer To (Destination Account)
                 </label>
-                <div className="space-y-2">
-                  {accounts.map((acc) => {
-                    const isFrozen =
-                      acc.id === 'acc_savings_6194' ||
-                      acc.id === 'acc_credit_9920' ||
-                      acc.status === 'Frozen';
-
-                    if (isFrozen) {
-                      return (
-                        <div
-                          key={acc.id}
-                          onClick={() => {
-                            setError(
-                              `Transfers and withdrawals are completely disabled for ${acc.name} (${acc.accountNumberMasked}). This account is inactive and frozen per customer instructions.`
-                            );
-                          }}
-                          className="p-3.5 rounded-xl border-2 border-slate-200 bg-slate-50/80 opacity-70 cursor-not-allowed transition-all hover:border-rose-300"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                <span>{acc.name}</span>
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
-                                  <Lock className="w-2.5 h-2.5" />
-                                  Inactive • Locked
-                                </span>
-                              </div>
-                              <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs font-bold font-mono text-slate-500">
-                                ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                              </div>
-                              <div className="text-[10px] text-rose-700 font-bold">Transfers Disabled</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={acc.id}
-                        onClick={() => setFromAccountId(acc.id)}
-                        className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                          fromAccountId === acc.id
-                            ? 'border-[#002855] bg-blue-50/40 shadow-xs'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs font-bold text-slate-900">{acc.name}</div>
-                            <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xs font-bold font-mono text-slate-900">
-                              ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </div>
-                            <div className="text-[10px] text-slate-400">Available</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <select
+                  value={toAccountId}
+                  onChange={(e) => setToAccountId(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                >
+                  {accounts
+                    .filter((a) => a.id !== fromAccountId)
+                    .map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} ({acc.accountNumberMasked}) — Balance: ${acc.ledgerBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </option>
+                    ))}
+                </select>
               </div>
+            )}
 
-              {/* Destination */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    To Destination
+            {activeTab === 'billpay' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Select Biller / Company
                   </label>
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setTransferType('internal')}
-                      className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                        transferType === 'internal' ? 'bg-white text-[#002855] shadow-xs' : 'text-slate-500'
-                      }`}
-                    >
-                      Internal Account
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTransferType('payee')}
-                      className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                        transferType === 'payee' ? 'bg-white text-[#002855] shadow-xs' : 'text-slate-500'
-                      }`}
-                    >
-                      External Payee
-                    </button>
-                  </div>
+                  <select
+                    value={selectedBiller}
+                    onChange={(e) => setSelectedBiller(e.target.value)}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                  >
+                    <option value="Xcel Energy">Xcel Energy — Electric & Gas (Account: 5421-9920-1123)</option>
+                    <option value="CenterPoint Energy">CenterPoint Energy — Minneapolis Gas (Account: 8812-4410-0982)</option>
+                    <option value="U.S. Bank Altitude Reserve">U.S. Bank Altitude® Reserve Card (•••• 9920)</option>
+                    <option value="City of Minneapolis">City of Minneapolis — Water & Utilities (Account: 9021-3310)</option>
+                  </select>
                 </div>
-
-                {transferType === 'internal' ? (
-                  <div className="space-y-2">
-                    {accounts.map((acc) => {
-                      const isFrozen =
-                        acc.id === 'acc_savings_6194' ||
-                        acc.id === 'acc_credit_9920' ||
-                        acc.status === 'Frozen';
-
-                      if (isFrozen) {
-                        return (
-                          <div
-                            key={acc.id}
-                            onClick={() => {
-                              setError(
-                                `Transfers to ${acc.name} (${acc.accountNumberMasked}) are completely disabled. The destination account is inactive and frozen.`
-                              );
-                            }}
-                            className="p-3.5 rounded-xl border-2 border-slate-200 bg-slate-50/80 opacity-70 cursor-not-allowed transition-all hover:border-rose-300"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                  <span>{acc.name}</span>
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
-                                    <Ban className="w-2.5 h-2.5" />
-                                    Inactive • Cannot Receive Transfers
-                                  </span>
-                                </div>
-                                <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-xs font-bold font-mono text-slate-500">
-                                  ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </div>
-                                <div className="text-[10px] text-rose-700 font-bold">Transfers Blocked</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div
-                          key={acc.id}
-                          onClick={() => setToAccountId(acc.id)}
-                          className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                            fromAccountId === acc.id
-                              ? 'opacity-40 pointer-events-none border-slate-100'
-                              : toAccountId === acc.id
-                              ? 'border-[#002855] bg-blue-50/40 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300 bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs font-bold text-slate-900">{acc.name}</div>
-                              <div className="text-[11px] font-mono text-slate-500">{acc.accountNumberMasked}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs font-bold font-mono text-slate-900">
-                                ${acc.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                              </div>
-                              <div className="text-[10px] text-slate-400">Current Balance</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                      {payees.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => setToPayeeId(p.id)}
-                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                            toPayeeId === p.id
-                              ? 'border-[#002855] bg-blue-50/40 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs font-bold text-slate-900">{p.name}</div>
-                              <div className="text-[11px] text-slate-500">
-                                {p.bankName} • {p.accountNumberMasked}
-                              </div>
-                            </div>
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 uppercase font-mono">
-                              ACH
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAddPayeeModal(true)}
-                      className="w-full py-2.5 px-3 rounded-xl border border-dashed border-slate-300 hover:border-[#002855] hover:bg-blue-50/50 text-[#002855] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add New Verified Payee
-                    </button>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Biller Account Reference Number
+                  </label>
+                  <input
+                    type="text"
+                    value={billerAccountNumber}
+                    onChange={(e) => setBillerAccountNumber(e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Amount Section */}
-            <div className="pt-4 border-t border-slate-100">
+            {activeTab === 'zelle' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Send to (Recipient Mobile or Email)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={zelleRecipient}
+                      onChange={(e) => setZelleRecipient(e.target.value)}
+                      placeholder="e.g. recipient@example.com or (612) 555-0199"
+                      className="w-full p-3.5 pl-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#7414CA]"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Enrolled recipients will receive money directly into their bank account in minutes.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Amount Input with Currency Tabular Format */}
+            <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                 Transfer Amount (USD)
               </label>
-              <div className="relative max-w-md">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400 font-mono">
-                  $
-                </span>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-slate-400 font-bold text-lg">$</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
-                  max={fromAccount ? fromAccount.availableBalance : 100000}
-                  placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-2xl font-mono font-bold text-slate-900 focus:outline-none focus:border-[#002855] focus:bg-white transition-all"
-                  required
+                  placeholder="0.00"
+                  className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xl font-bold font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                 />
               </div>
 
-              {/* Quick Amount Buttons */}
-              <div className="flex items-center gap-2 mt-2">
-                {[100, 500, 1000, 5000].map((val) => (
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-2 mt-2.5">
+                {[50, 100, 500, 1000, 5000].map((val) => (
                   <button
                     key={val}
                     type="button"
-                    onClick={() => handleQuickAmount(val)}
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                    onClick={() => setAmount(String(val))}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold font-mono tabular-nums text-slate-700 transition-colors"
                   >
-                    +${val}
+                    ${val.toLocaleString()}
                   </button>
                 ))}
-                {fromAccount && (
-                  <button
-                    type="button"
-                    onClick={() => setAmount(String(fromAccount.availableBalance))}
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-blue-50 text-[#002855] hover:bg-blue-100 transition-colors"
-                  >
-                    Transfer Max
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* Description & Speed */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Description / Memo (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Monthly Savings Allocation, Rent, Services"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#002855]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Transfer Speed
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSpeed('instant')}
-                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                      speed === 'instant'
-                        ? 'border-[#002855] bg-blue-50/50 text-[#002855]'
-                        : 'border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-                    <div>
-                      <div className="text-xs font-bold">Instant</div>
-                      <div className="text-[10px] text-slate-500">Immediate posting</div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSpeed('standard')}
-                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                      speed === 'standard'
-                        ? 'border-[#002855] bg-blue-50/50 text-[#002855]'
-                        : 'border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <div className="text-xs font-bold">Standard ACH</div>
-                      <div className="text-[10px] text-slate-500">1-2 business days</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
+            {/* Memo / Description */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Memo / Note (Optional)
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Monthly maintenance, reimbursement, invoice payment"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+              />
             </div>
 
-            {/* Submit Action */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            {/* Submit Button */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
               <button
                 type="submit"
-                disabled={
-                  numAmount <= 0 ||
-                  fromAccount?.status === 'Frozen' ||
-                  fromAccount?.status === 'Transfers Temporarily Restricted' ||
-                  (fromAccount && fromAccount.availableBalance <= 0)
-                }
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`px-6 py-3 rounded-xl font-bold text-xs text-white transition-all shadow-md flex items-center gap-2 ${
+                  activeTab === 'zelle'
+                    ? 'bg-[#7414CA] hover:bg-[#5e0ea7]'
+                    : 'bg-[#005A9C] hover:bg-[#004578]'
+                }`}
               >
-                {fromAccount?.status === 'Frozen' ? (
-                  <>
-                    <Lock className="w-4 h-4 text-rose-400" />
-                    Transfers Disabled (Account Inactive & Frozen)
-                  </>
-                ) : fromAccount?.status === 'Transfers Temporarily Restricted' ? (
-                  <>Transfers Restricted on Selected Account</>
-                ) : (
-                  <>
-                    Continue to Review <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                <span>Review Transfer</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </form>
-        </div>
-      )}
+        )}
 
-      {/* STEP 2: REVIEW */}
-      {step === 'review' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-900">Review Transfer Authorization</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Please verify all payment specifics before providing final cryptographic authorization.
-            </p>
-          </div>
-
-          <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <span className="text-xs text-slate-500">Transfer Amount</span>
-              <span className="text-2xl font-black text-slate-900 font-mono">
-                ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-slate-400 uppercase text-[10px] font-semibold block">From Account</span>
-                <span className="font-bold text-slate-900 block mt-0.5">{fromAccount?.name}</span>
-                <span className="font-mono text-slate-500 text-[11px]">{fromAccount?.accountNumberMasked}</span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 uppercase text-[10px] font-semibold block">To Recipient</span>
-                <span className="font-bold text-slate-900 block mt-0.5">
-                  {transferType === 'internal' ? toAccount?.name : selectedPayee?.name}
-                </span>
-                <span className="font-mono text-slate-500 text-[11px]">
-                  {transferType === 'internal' ? toAccount?.accountNumberMasked : selectedPayee?.accountNumberMasked}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 uppercase text-[10px] font-semibold block">Effective Date</span>
-                <span className="font-medium text-slate-800 block mt-0.5">{transferDate}</span>
-              </div>
-
-              <div>
-                <span className="text-slate-400 uppercase text-[10px] font-semibold block">Speed & Rail</span>
-                <span className="font-medium text-slate-800 block mt-0.5">
-                  {speed === 'instant' ? 'Instant Relationship Credit' : 'Standard Automated Clearing House'}
-                </span>
-              </div>
-            </div>
-
-            {description && (
-              <div className="pt-2 border-t border-slate-200">
-                <span className="text-slate-400 uppercase text-[10px] font-semibold block">Memo / Narrative</span>
-                <p className="text-xs text-slate-700 italic mt-0.5">{description}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex items-start gap-3 text-xs text-slate-700">
-            <ShieldCheck className="w-5 h-5 text-[#002855] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-[#002855]">Two-Factor Authorization Enforced</p>
-              <p className="mt-0.5 text-slate-600">
-                This transaction has been pre-authorized via Justin Jefferson’s biometric device credentials. Submitting will immediately update your authoritative account ledger.
+        {step === 'review' && (
+          <div className="space-y-6 animate-in fade-in-50 duration-150">
+            <div className="border-b border-slate-100 pb-4">
+              <h2 className="text-lg font-bold text-[#0C2340]">Review Transfer Details</h2>
+              <p className="text-xs text-slate-500">
+                Please verify the payment instructions below before submitting.
               </p>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => setStep('form')}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              Back to Edit
-            </button>
-
-            <button
-              type="button"
-              onClick={handleConfirmTransfer}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold shadow-md hover:shadow-lg disabled:opacity-50 transition-all"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Recording to Ledger...
-                </>
-              ) : (
-                <>
-                  <FileCheck className="w-4 h-4" />
-                  Confirm & Execute Transfer
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: CONFIRMED */}
-      {step === 'confirmed' && transferResult && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center space-y-6 animate-in zoom-in-95 duration-200">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border-2 border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-            <CheckCircle2 className="w-9 h-9" />
-          </div>
-
-          <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              Transfer Settled & Posted
-            </span>
-            <h2 className="text-2xl font-black text-slate-900 mt-3 font-mono">
-              ${transferResult.transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
-            </h2>
-            <p className="text-xs text-slate-600 mt-1 max-w-md mx-auto">{transferResult.message}</p>
-          </div>
-
-          <div className="max-w-md mx-auto bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs space-y-2.5 text-left">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <span className="text-slate-500 font-medium">Reference Code</span>
-              <span className="font-mono font-bold text-slate-900">{transferResult.transaction.reference}</span>
-            </div>
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <span className="text-slate-500 font-medium">Date & Timestamp</span>
-              <span className="font-mono text-slate-700">{transferResult.transaction.date} {transferResult.transaction.time}</span>
-            </div>
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <span className="text-slate-500 font-medium">New {transferResult.fromAccount.name} Balance</span>
-              <span className="font-mono font-bold text-[#002855]">
-                ${transferResult.fromAccount.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            {transferResult.toAccount && (
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">New {transferResult.toAccount.name} Balance</span>
-                <span className="font-mono font-bold text-emerald-700">
-                  ${transferResult.toAccount.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 divide-y divide-slate-200 text-xs">
+              <div className="py-2.5 flex items-center justify-between">
+                <span className="text-slate-500">Method:</span>
+                <span className="font-bold text-[#0C2340]">
+                  {activeTab === 'internal'
+                    ? 'Internal U.S. Bank Transfer'
+                    : activeTab === 'zelle'
+                    ? 'Send Money with Zelle®'
+                    : 'Electronic Bill Pay'}
                 </span>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              onClick={handleResetForNewTransfer}
-              className="px-5 py-2.5 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold transition-all shadow-xs"
-            >
-              Make Another Transfer
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ADD PAYEE MODAL */}
-      {showAddPayeeModal && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Add New Recipient Payee</h3>
-              <button
-                onClick={() => setShowAddPayeeModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="py-2.5 flex items-center justify-between">
+                <span className="text-slate-500">Funding Account:</span>
+                <span className="font-mono font-bold text-slate-800">
+                  {fromAccount.name} ({fromAccount.accountNumberMasked})
+                </span>
+              </div>
+              <div className="py-2.5 flex items-center justify-between">
+                <span className="text-slate-500">Recipient / Destination:</span>
+                <span className="font-bold text-slate-800">
+                  {activeTab === 'internal'
+                    ? `${toAccount?.name} (${toAccount?.accountNumberMasked})`
+                    : activeTab === 'zelle'
+                    ? zelleRecipient
+                    : selectedBiller}
+                </span>
+              </div>
+              <div className="py-2.5 flex items-center justify-between">
+                <span className="text-slate-500">Amount:</span>
+                <span className="text-base font-black font-mono tabular-nums text-slate-900">
+                  ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             </div>
 
-            {addPayeeError && (
-              <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <span>{addPayeeError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreatePayee} className="space-y-4 mt-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Payee Legal / Business Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Minneapolis Wealth Partners"
-                  value={newPayeeName}
-                  onChange={(e) => setNewPayeeName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002855]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Recipient Financial Institution</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. JPMorgan Chase Bank"
-                  value={newPayeeBank}
-                  onChange={(e) => setNewPayeeBank(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002855]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Routing Transit Number (9 Digits)</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={9}
-                  placeholder="091000022"
-                  value={newPayeeRouting}
-                  onChange={(e) => setNewPayeeRouting(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#002855]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Account Number</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="1048291024"
-                  value={newPayeeAccNum}
-                  onChange={(e) => setNewPayeeAccNum(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#002855]"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddPayeeModal(false)}
-                  className="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={addPayeeLoading}
-                  className="px-4 py-2 bg-[#002855] text-white font-bold rounded-lg hover:bg-[#001f3f] transition-colors"
-                >
-                  {addPayeeLoading ? 'Verifying...' : 'Save Payee'}
-                </button>
-              </div>
-            </form>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setStep('form')}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Back to Edit
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmTransfer}
+                disabled={loading}
+                className={`px-6 py-3 rounded-xl font-bold text-xs text-white transition-all shadow-md flex items-center gap-2 ${
+                  activeTab === 'zelle'
+                    ? 'bg-[#7414CA] hover:bg-[#5e0ea7]'
+                    : 'bg-[#005A9C] hover:bg-[#004578]'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Processing Transfer...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Authorize & Send</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {step === 'confirmed' && transferResult && (
+          <div className="text-center py-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+
+            <div>
+              <h2 className="text-xl font-extrabold text-[#0C2340]">Transfer Successfully Processed</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Your transfer was posted and reconciled against the U.S. Bank authoritative ledger.
+              </p>
+            </div>
+
+            <div className="max-w-md mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-left font-mono">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Confirmation:</span>
+                <span className="font-bold text-slate-900">{transferResult.transaction.reference}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Amount:</span>
+                <span className="font-bold text-slate-900 tabular-nums">
+                  ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleResetForNewTransfer}
+              className="px-6 py-2.5 rounded-xl bg-[#005A9C] text-white text-xs font-bold hover:bg-[#004578]"
+            >
+              Done / Start Another Transfer
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

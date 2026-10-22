@@ -12,13 +12,17 @@ import {
   TrendingDown,
   Building2,
   ArrowRight,
+  Filter,
 } from 'lucide-react';
 import { StatementSummary, Account, Customer, Transaction } from '../types/banking.ts';
 import { api } from '../services/api.ts';
+import { UsBankLogo, EqualHousingLenderIcon } from './UsBankLogo.tsx';
 
 export const StatementsPage: React.FC = () => {
   const [statements, setStatements] = useState<StatementSummary[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string>('acc_checking_4821');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [selectedMonth, setSelectedMonth] = useState<string>('All');
   const [loading, setLoading] = useState(true);
 
   // Statement Detail Modal
@@ -29,20 +33,34 @@ export const StatementsPage: React.FC = () => {
     transactions: Transaction[];
   } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-
   const [statementError, setStatementError] = useState<string | null>(null);
 
   const years = [2026, 2025, 2024, 2023, 2022, 2021];
+  const months = [
+    { value: 'All', label: 'All Months' },
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
 
   const fetchStatements = async () => {
     setLoading(true);
     setStatementError(null);
     try {
-      const data = await api.getStatements('acc_checking_4821');
+      const data = await api.getStatements(selectedAccount);
       setStatements(data);
     } catch (err) {
       console.error('Failed to load statements:', err);
-      setStatementError('Unable to load statements. Please try again.');
+      setStatementError('Unable to load statement archives. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,15 +68,19 @@ export const StatementsPage: React.FC = () => {
 
   useEffect(() => {
     fetchStatements();
-  }, []);
+  }, [selectedAccount]);
 
-  const filteredStatements = statements.filter((s) => s.year === selectedYear);
+  const filteredStatements = statements.filter((s) => {
+    const yearMatch = s.year === selectedYear;
+    const monthMatch = selectedMonth === 'All' || s.month === Number(selectedMonth);
+    return yearMatch && monthMatch;
+  });
 
   const openStatementDetail = async (stmt: StatementSummary) => {
     setDetailLoading(true);
     setStatementError(null);
     try {
-      const detail = await api.getStatementDetail(stmt.year, stmt.month, 'acc_checking_4821');
+      const detail = await api.getStatementDetail(stmt.year, stmt.month, selectedAccount);
       setActiveStatement(detail);
     } catch (err) {
       setStatementError('Official statement document temporarily unavailable.');
@@ -74,68 +96,111 @@ export const StatementsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">eStatements & Documents</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Access, reconcile, and download official monthly financial statements for Premium Checking •••• 4821.
-          </p>
+      <div>
+        <h1 className="text-2xl font-extrabold text-[#0C2340] tracking-tight">eStatements & Documents</h1>
+        <p className="text-xs text-slate-500 mt-1">
+          Access, download, and reconcile official monthly bank statements and tax records.
+        </p>
+      </div>
+
+      {/* Standard U.S. Bank Dropdown Selectors */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+          <Filter className="w-3.5 h-3.5 text-[#005A9C]" />
+          Statement Document Filters
         </div>
 
-        {/* Year Filter */}
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-xs self-start sm:self-auto">
-          {years.map((yr) => (
-            <button
-              key={yr}
-              onClick={() => setSelectedYear(yr)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                selectedYear === yr
-                  ? 'bg-[#002855] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Account Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Select Account
+            </label>
+            <select
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
             >
-              {yr}
-            </button>
-          ))}
+              <option value="acc_checking_4821">U.S. Bank Premium Checking (•••• 4821)</option>
+              <option value="acc_savings_6194">U.S. Bank High-Yield Savings (•••• 6194)</option>
+              <option value="acc_credit_9920">U.S. Bank Altitude Reserve Visa (•••• 9920)</option>
+            </select>
+          </div>
+
+          {/* Tax Year Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Tax Year
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+            >
+              {years.map((yr) => (
+                <option key={yr} value={yr}>
+                  Calendar Year {yr}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Month Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Statement Cycle Month
+            </label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+            >
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Reconciliation Assurance Banner */}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#002855] flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <ShieldCheck className="w-4 h-4 text-[#002855] shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-[#005A9C] shrink-0" />
           <span>
-            <strong>Mathematical Reconciliation Guarantee:</strong> Every monthly statement reconciles precisely with all posted ledger transactions.
+            <strong>Official Record Guarantee:</strong> Every eStatement reconciles with posted transactions and is legally admissible for audit purposes.
           </span>
         </div>
-        <span className="hidden md:inline text-[11px] font-mono text-blue-900">Archive 2021–2026</span>
+        <span className="hidden md:inline text-[11px] font-mono font-bold text-[#005A9C]">Archive 2021–2026</span>
       </div>
 
       {/* Statements Grid */}
       {loading ? (
         <div className="p-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-          <div className="w-5 h-5 border-2 border-[#002855] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          Loading statement archives...
+          <div className="w-5 h-5 border-2 border-[#005A9C] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          Loading statements...
         </div>
       ) : filteredStatements.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 text-xs">
-          No statements recorded for year {selectedYear}.
+          No statements recorded for the selected filter combination.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStatements.map((stmt) => (
             <div
               key={stmt.id}
-              className="bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-[#E2E8F0] hover:border-slate-300 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#002855] flex items-center justify-center font-bold text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#005A9C] flex items-center justify-center font-bold text-xs">
                       {stmt.monthName.substring(0, 3)}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-bold text-[#0C2340]">
                         {stmt.monthName} {stmt.year}
                       </h3>
                       <p className="text-[10px] text-slate-400">Statement #{stmt.id.replace('stmt_', '')}</p>
@@ -149,7 +214,7 @@ export const StatementsPage: React.FC = () => {
                 <div className="py-3 space-y-2 text-xs">
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Opening Balance</span>
-                    <span className="font-mono font-medium text-slate-800">
+                    <span className="font-mono font-bold tabular-nums text-slate-800">
                       ${stmt.openingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -158,7 +223,7 @@ export const StatementsPage: React.FC = () => {
                     <span className="flex items-center gap-1">
                       <TrendingUp className="w-3.5 h-3.5" /> Total Deposits
                     </span>
-                    <span className="font-mono font-bold">
+                    <span className="font-mono font-bold tabular-nums">
                       +${stmt.totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -167,14 +232,14 @@ export const StatementsPage: React.FC = () => {
                     <span className="flex items-center gap-1">
                       <TrendingDown className="w-3.5 h-3.5 text-slate-400" /> Total Debits
                     </span>
-                    <span className="font-mono font-medium">
+                    <span className="font-mono font-medium tabular-nums">
                       -${stmt.totalWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 font-bold text-slate-900">
                     <span>Closing Ledger Balance</span>
-                    <span className="font-mono text-sm text-[#002855]">
+                    <span className="font-mono text-sm tabular-nums text-[#0C2340]">
                       ${stmt.closingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -182,12 +247,12 @@ export const StatementsPage: React.FC = () => {
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-[11px] text-slate-400">{stmt.transactionCount} posted transactions</span>
+                <span className="text-[11px] text-slate-400">{stmt.transactionCount} transactions</span>
                 <button
                   onClick={() => openStatementDetail(stmt)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#002855] text-white hover:bg-[#001f3f] font-semibold transition-colors shadow-2xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#005A9C] text-white hover:bg-[#004578] font-semibold transition-colors shadow-xs"
                 >
-                  <FileText className="w-3.5 h-3.5" /> View Statement
+                  <FileText className="w-3.5 h-3.5" /> View PDF
                 </button>
               </div>
             </div>
@@ -202,15 +267,15 @@ export const StatementsPage: React.FC = () => {
             {/* Action Bar (hidden on print) */}
             <div className="p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between no-print">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#002855]" />
+                <FileText className="w-4 h-4 text-[#005A9C]" />
                 <span className="text-xs font-bold text-slate-800">
-                  US Bank Official Monthly Statement • {activeStatement.summary.monthName} {activeStatement.summary.year}
+                  U.S. Bank Official Monthly Statement • {activeStatement.summary.monthName} {activeStatement.summary.year}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-xs"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-xs"
                 >
                   <Printer className="w-3.5 h-3.5" /> Print / Save PDF
                 </button>
@@ -225,21 +290,18 @@ export const StatementsPage: React.FC = () => {
 
             {/* Printable Statement Document Content */}
             <div className="p-8 sm:p-10 max-h-[80vh] overflow-y-auto print:max-h-none print:overflow-visible print:p-6" id="printable-statement">
-              {/* Bank Header */}
-              <div className="flex items-start justify-between border-b-2 border-[#002855] pb-6 mb-6">
+              {/* Bank Header with Official Logo */}
+              <div className="flex items-start justify-between border-b-2 border-[#0C2340] pb-6 mb-6">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-[#002855] rounded flex items-center justify-center text-white font-black text-sm">
-                      USB
-                    </div>
-                    <span className="text-2xl font-black text-[#002855] tracking-tight">US BANK</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium">U.S. Bank National Association • Member FDIC</p>
-                  <p className="text-[11px] text-slate-500">800 Nicollet Mall, Minneapolis, MN 55402</p>
+                  <UsBankLogo size="lg" variant="dark" />
+                  <p className="text-[11px] text-slate-600 font-medium mt-2">
+                    U.S. Bank National Association • Member FDIC
+                  </p>
+                  <p className="text-[11px] text-slate-500">800 Nicollet Mall, Suite 100, Minneapolis, MN 55402</p>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-xs uppercase font-bold tracking-wider text-slate-800">Account Statement</div>
+                  <div className="text-xs uppercase font-bold tracking-wider text-slate-800">Official eStatement</div>
                   <div className="text-xs font-semibold text-slate-600 mt-1">{activeStatement.summary.periodLabel}</div>
                   <div className="text-[11px] font-mono text-slate-500 mt-0.5">
                     Account: {activeStatement.account.accountNumberMasked}
@@ -262,9 +324,9 @@ export const StatementsPage: React.FC = () => {
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Account Profile</span>
                   <div className="text-sm font-bold text-slate-900 mt-1">{activeStatement.account.name}</div>
-                  <div className="text-slate-600">Status: {activeStatement.account.status} • Routing: {activeStatement.account.routingNumberMasked}</div>
+                  <div className="text-slate-600">Routing (ABA): {activeStatement.account.routingNumberMasked}</div>
                   <div className="text-slate-600">Annual Percentage Yield (APY): 0.45%</div>
-                  <div className="text-slate-500 mt-1">Statement Cycle: Calendar Month</div>
+                  <div className="text-slate-500 mt-1">Cycle: Monthly Calendar</div>
                 </div>
               </div>
 
@@ -276,25 +338,25 @@ export const StatementsPage: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Starting Balance</span>
-                    <span className="text-sm font-bold font-mono text-slate-900 mt-1 block">
+                    <span className="text-sm font-bold font-mono tabular-nums text-slate-900 mt-1 block">
                       ${activeStatement.summary.openingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
                     <span className="text-[10px] uppercase font-bold text-emerald-800 block">Total Deposits (+)</span>
-                    <span className="text-sm font-bold font-mono text-emerald-700 mt-1 block">
+                    <span className="text-sm font-bold font-mono tabular-nums text-emerald-700 mt-1 block">
                       +${activeStatement.summary.totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Withdrawals (-)</span>
-                    <span className="text-sm font-bold font-mono text-slate-900 mt-1 block">
+                    <span className="text-sm font-bold font-mono tabular-nums text-slate-900 mt-1 block">
                       -${activeStatement.summary.totalWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="bg-blue-50/80 p-3 rounded-xl border border-blue-200">
-                    <span className="text-[10px] uppercase font-bold text-[#002855] block">Ending Balance</span>
-                    <span className="text-sm font-black font-mono text-[#002855] mt-1 block">
+                    <span className="text-[10px] uppercase font-bold text-[#0C2340] block">Ending Balance</span>
+                    <span className="text-sm font-black font-mono tabular-nums text-[#0C2340] mt-1 block">
                       ${activeStatement.summary.closingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -318,48 +380,37 @@ export const StatementsPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
-                      {activeStatement.transactions.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-6 text-center text-slate-400 font-sans">
-                            No posted transactions recorded during this calendar period.
+                      {activeStatement.transactions.map((tx) => (
+                        <tr key={tx.id}>
+                          <td className="py-2 px-3 text-slate-600">{tx.date}</td>
+                          <td className="py-2 px-3 font-sans text-slate-900 font-medium">
+                            {tx.merchant} - {tx.description}
+                          </td>
+                          <td className="py-2 px-3 text-slate-400">{tx.reference}</td>
+                          <td
+                            className={`py-2 px-3 text-right tabular-nums font-bold ${
+                              tx.type === 'credit' ? 'text-emerald-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="py-2 px-3 text-right tabular-nums text-slate-800">
+                            ${tx.runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
-                      ) : (
-                        activeStatement.transactions.map((tx) => (
-                          <tr key={tx.id} className="hover:bg-slate-50">
-                            <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{tx.date}</td>
-                            <td className="py-2 px-3 font-sans">
-                              <span className="font-bold text-slate-900 block">{tx.merchant}</span>
-                              <span className="text-[10px] text-slate-500">{tx.description}</span>
-                            </td>
-                            <td className="py-2 px-3 text-slate-400">{tx.reference}</td>
-                            <td
-                              className={`py-2 px-3 text-right font-bold whitespace-nowrap ${
-                                tx.type === 'credit' ? 'text-emerald-700' : 'text-slate-900'
-                              }`}
-                            >
-                              {tx.type === 'credit' ? '+' : '-'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </td>
-                            <td className="py-2 px-3 text-right text-slate-800 font-semibold whitespace-nowrap">
-                              ${tx.runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                      ))}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Statement Footer Legal Disclaimers */}
-              <div className="mt-8 pt-6 border-t border-slate-200 text-[10px] text-slate-400 space-y-1 text-center">
-                <p className="font-semibold text-slate-700 uppercase tracking-wider">
-                  Official Account Statement • Certified Banking Record
-                </p>
-                <p>
-                  In Case of Errors or Questions About Your Electronic Transfers, call 800-USBANKS or write to U.S. Bank Electronic Funds Services, P.O. Box 790064, St. Louis, MO 63179.
-                </p>
-                <p>US Bank National Association • Equal Housing Lender • Member FDIC</p>
+              {/* Legal & Regulatory Footer */}
+              <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 gap-2">
+                <div className="flex items-center gap-2">
+                  <EqualHousingLenderIcon className="w-4 h-4 text-slate-500" />
+                  <span>Member FDIC | Equal Housing Lender</span>
+                </div>
+                <span>© 2026 U.S. Bank National Association. All rights reserved.</span>
               </div>
             </div>
           </div>

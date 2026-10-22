@@ -28,6 +28,7 @@ import {
 import { Customer, Account } from '../types/banking.ts';
 import { api } from '../services/api.ts';
 import { SportsPromoSection } from './SportsPromoSection.tsx';
+import { UsBankLogo, EqualHousingLenderIcon } from './UsBankLogo.tsx';
 
 interface PublicHomePageProps {
   onLoginSuccess: (customer: Customer, accounts: Account[]) => void;
@@ -247,39 +248,62 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         </div>
       </div>
 
-      {/* Main Header / Navbar */}
-      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-        <div className="flex items-center gap-5 sm:gap-6">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-slate-700 hover:text-[#0c2340] p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-            title="Menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          {/* Exact U.S. Bank logo mark */}
-          <div className="flex items-center font-extrabold text-2xl tracking-[-0.5px] text-[#0c2340] select-none cursor-pointer">
-            <span
-              style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 7px', borderRadius: '4px', marginRight: '3px' }}
-              className="text-base font-black uppercase tracking-tight"
+      {/* Main Header / Navbar inspired by authentic U.S. Bank reference image */}
+      <div className="sticky top-0 z-40 bg-white">
+        <header className="py-3 px-4 sm:px-8 max-w-7xl mx-auto flex items-center justify-between">
+          {/* Left: Hamburger menu */}
+          <div className="w-20 sm:w-28 flex items-center justify-start">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1.5 -ml-1.5 text-[#40455A] hover:text-[#0C2340] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Menu"
+              aria-label="Open Navigation Menu"
             >
-              us
-            </span>
-            <span>bank</span>
+              <svg
+                className="w-7 h-7 sm:w-8 sm:h-8"
+                viewBox="0 0 28 28"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              >
+                <line x1="4" y1="7" x2="24" y2="7" />
+                <line x1="4" y1="14" x2="24" y2="14" />
+                <line x1="4" y1="21" x2="24" y2="21" />
+              </svg>
+            </button>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setShowLoginModal(true)}
-            className="text-[#1d4ed8] hover:text-[#0c2340] font-bold text-sm sm:text-base px-3.5 sm:px-4 py-2 rounded-lg hover:bg-blue-50/60 transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <Lock className="w-4 h-4 text-[#1d4ed8]" />
-            Log in
-          </button>
-        </div>
-      </header>
+          {/* Center: Exactly Centered Official U.S. Bank Logo */}
+          <div className="flex-1 flex items-center justify-center">
+            <img
+              src="/assets/usbank_logo_transparent.png"
+              alt="U.S. Bank"
+              className="h-8 sm:h-10 md:h-11 w-auto object-contain cursor-pointer select-none transition-transform hover:scale-[1.01]"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
+          </div>
+
+          {/* Right: "Log in" button */}
+          <div className="w-20 sm:w-28 flex items-center justify-end">
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="text-[#395ACE] hover:text-[#162B7C] font-bold text-base sm:text-lg transition-colors px-1 py-1 cursor-pointer select-none"
+            >
+              Log in
+            </button>
+          </div>
+        </header>
+
+        {/* Authentic Dark Blue Horizontal Strip beneath Header */}
+        <div
+          className="h-3 sm:h-3.5 w-full shadow-inner"
+          style={{
+            backgroundImage:
+              'linear-gradient(180deg, #585d85 0%, #314287 25%, #162b7c 55%, #081e74 100%)',
+          }}
+        />
+      </div>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
@@ -287,15 +311,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
           <div className="w-80 max-w-[85vw] bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-                <div className="flex items-center font-extrabold text-xl tracking-tight text-[#0c2340]">
-                  <span
-                    style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 6px', borderRadius: '4px', marginRight: '2px' }}
-                    className="text-sm font-black"
-                  >
-                    us
-                  </span>
-                  <span>bank</span>
-                </div>
+                <UsBankLogo size="md" variant="dark" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
@@ -570,15 +586,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       <footer className="mt-auto bg-[#0c2340] text-white py-12 px-6 sm:px-10 lg:px-16 border-t border-[#133a6f] text-xs">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
-            <div className="flex items-center font-extrabold text-2xl tracking-tight text-white">
-              <span
-                style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 7px', borderRadius: '4px', marginRight: '3px' }}
-                className="text-base font-black"
-              >
-                us
-              </span>
-              <span>bank</span>
-            </div>
+            <UsBankLogo size="lg" variant="light" />
             <div className="flex flex-wrap items-center gap-6 text-slate-300">
               <span className="hover:text-white cursor-pointer" onClick={() => setShowSupportModal(true)}>Privacy & Security</span>
               <span className="hover:text-white cursor-pointer" onClick={() => setShowSupportModal(true)}>Terms of Use</span>
@@ -588,6 +596,10 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
           </div>
 
           <div className="space-y-2 text-slate-400 text-[11px] leading-relaxed">
+            <div className="flex items-center gap-2 text-slate-300 font-semibold mb-1">
+              <EqualHousingLenderIcon className="w-4 h-4 text-white" />
+              <span>Member FDIC | Equal Housing Lender</span>
+            </div>
             <p>
               © 2026 U.S. Bank National Association. Deposit products offered by U.S. Bank National Association. Member FDIC. Equal Housing Lender.
             </p>
@@ -603,15 +615,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl p-6 sm:p-8 border border-slate-200 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center font-extrabold text-xl text-[#0c2340]">
-                <span
-                  style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 6px', borderRadius: '4px', marginRight: '2px' }}
-                  className="text-xs font-black"
-                >
-                  us
-                </span>
-                <span>bank</span>
-              </div>
+              <UsBankLogo size="md" variant="dark" />
               <button
                 onClick={() => {
                   setShowLoginModal(false);

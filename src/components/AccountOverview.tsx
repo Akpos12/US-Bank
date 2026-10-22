@@ -12,6 +12,7 @@ import {
   Building2,
   Calendar,
   Lock,
+  Unlock,
   ArrowUpRight,
   ArrowDownLeft,
   Edit3,
@@ -19,10 +20,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Building,
+  Smartphone,
+  AlertTriangle,
+  FileText,
+  Wifi,
 } from 'lucide-react';
 import { Account, Transaction } from '../types/banking.ts';
 import { BalanceHistoryChart } from './BalanceHistoryChart.tsx';
 import { AccountRestrictionBanner } from './AccountRestrictionBanner.tsx';
+import { UsBankLogo } from './UsBankLogo.tsx';
 import { api } from '../services/api.ts';
 
 const USBANK_ROUTING_PRESETS = [
@@ -80,6 +86,11 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
   const [copiedAcc, setCopiedAcc] = useState(false);
   const [copiedRouting, setCopiedRouting] = useState(false);
 
+  // Card Controls state
+  const [cardLocked, setCardLocked] = useState(false);
+  const [showLostStolenModal, setShowLostStolenModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+
   // Change Routing Number Modal State
   const [showRoutingModal, setShowRoutingModal] = useState(false);
   const [selectedRoutingPreset, setSelectedRoutingPreset] = useState<string>('091000022');
@@ -98,6 +109,10 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
   const [recentTxs, setRecentTxs] = useState<Transaction[]>([]);
 
   const currentAccount = accounts.find((a) => a.id === selectedAccId) || accounts[0];
+  const isChecking = currentAccount.id === 'acc_checking_4821';
+  const isRestricted =
+    currentAccount.status === 'Transfers Temporarily Restricted' ||
+    currentAccount.restriction?.restriction_active;
 
   const handleOpenRoutingModal = () => {
     const cur = currentAccount.routingNumber;
@@ -193,30 +208,29 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {/* Title & Account Picker */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Account Portfolio Overview</h1>
+          <h1 className="text-2xl font-extrabold text-[#0C2340] tracking-tight">Account Portfolio</h1>
           <p className="text-xs text-slate-500 mt-1">
             Authoritative ledger balance, interest accruals, transit routing credentials, and real-time activity.
           </p>
         </div>
 
         {/* Account Selector Pill */}
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#E2E8F0] shadow-xs overflow-x-auto">
           {accounts.map((acc) => {
-            const isFrozen = acc.status === 'Frozen';
+            const isSelected = selectedAccId === acc.id;
             return (
               <button
                 key={acc.id}
                 onClick={() => setSelectedAccId(acc.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                  selectedAccId === acc.id
-                    ? 'bg-[#002855] text-white shadow-xs'
+                  isSelected
+                    ? 'bg-[#005A9C] text-white shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                {isFrozen && <Lock className="w-3 h-3 text-rose-500 shrink-0" />}
                 <span>{acc.name} ({acc.accountNumberMasked})</span>
               </button>
             );
@@ -225,45 +239,37 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
       </div>
 
       {/* Main Account Details Card */}
-      <div className="bg-gradient-to-br from-[#002855] via-[#001f3f] to-[#0a192f] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-[#0C2340] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         {/* Subtle decorative background pattern */}
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-white/5 pointer-events-none blur-2xl"></div>
-        <div className="absolute right-12 top-6 opacity-20 pointer-events-none">
-          <Building2 className="w-48 h-48 text-white" />
-        </div>
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-white/5 to-transparent pointer-events-none"></div>
 
-        <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-500/20 text-blue-200 border border-blue-400/30 uppercase tracking-wider">
                 {currentAccount.type}
               </span>
-              <span className="text-xs text-slate-300 font-medium">US Bank Relationship Tier</span>
-              {currentAccount.status === 'Frozen' ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-300 font-bold bg-rose-500/20 px-2.5 py-0.5 rounded-full border border-rose-400/30">
-                  <Lock className="w-3 h-3 text-rose-400" />
-                  Account Inactive & Frozen
-                </span>
-              ) : currentAccount.status === 'Transfers Temporarily Restricted' ? (
+              <span className="text-xs text-slate-300 font-medium">U.S. Bank Private Wealth Tier</span>
+              {isRestricted ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-300 font-bold bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  Transfers Temporarily Restricted
+                  Temporary Security Hold
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  {currentAccount.status}
+                  Active
                 </span>
               )}
             </div>
 
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{currentAccount.name}</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{currentAccount.name}</h2>
               <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-300">
                 {/* Account Number Toggle */}
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-400">Account:</span>
-                  <span className="font-mono font-bold text-white">
+                  <span className="font-mono font-bold text-white tabular-nums">
                     {showFullAccount ? currentAccount.accountNumber : currentAccount.accountNumberMasked}
                   </span>
                   <button
@@ -282,8 +288,8 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
 
                 {/* Routing Number Toggle */}
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400">Routing:</span>
-                  <span className="font-mono font-bold text-white">
+                  <span className="text-slate-400">Routing (ABA):</span>
+                  <span className="font-mono font-bold text-white tabular-nums">
                     {showFullRouting ? currentAccount.routingNumber : currentAccount.routingNumberMasked}
                   </span>
                   <button
@@ -299,10 +305,10 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                   <button
                     onClick={handleOpenRoutingModal}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white transition-colors text-[11px] font-semibold border border-white/20 ml-1.5 cursor-pointer"
-                    title="Change routing number for Justin Jefferson"
+                    title="Change routing number"
                   >
                     <Edit3 className="w-3 h-3 text-amber-300" />
-                    <span>Change</span>
+                    <span>Change Routing</span>
                   </button>
                 </div>
               </div>
@@ -312,14 +318,16 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
             <div className="pt-2 flex flex-wrap items-baseline gap-6 sm:gap-10">
               <div>
                 <span className="text-[11px] uppercase tracking-wider text-slate-300 block font-semibold">
-                  {currentAccount.status === 'Frozen' ? 'Available Balance (Unavailable)' : 'Total Available Balance'}
+                  {isChecking && isRestricted ? 'Available Balance (Restricted)' : 'Available Balance'}
                 </span>
-                <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-0.5 block">
-                  ${currentAccount.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="text-3xl sm:text-4xl font-black font-mono tabular-nums text-white mt-0.5 block">
+                  ${(isChecking && isRestricted ? 0 : currentAccount.availableBalance).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}
                 </span>
-                {currentAccount.status === 'Frozen' && (
-                  <span className="text-xs text-rose-300 font-semibold flex items-center gap-1 mt-1">
-                    <Lock className="w-3 h-3" /> Inactive • Transfers Disabled
+                {isRestricted && (
+                  <span className="text-xs text-amber-300 font-semibold flex items-center gap-1 mt-1">
+                    <Lock className="w-3 h-3 text-amber-400" /> In-Person Branch Verification Required
                   </span>
                 )}
               </div>
@@ -328,7 +336,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                 <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">
                   Current Ledger Balance
                 </span>
-                <span className="text-xl sm:text-2xl font-bold font-mono text-slate-200 mt-0.5 block">
+                <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-200 mt-0.5 block">
                   ${currentAccount.ledgerBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -339,35 +347,26 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
           <div className="flex flex-col justify-between sm:items-end gap-4 shrink-0">
             <div className="text-left sm:text-right text-xs text-slate-300 space-y-1">
               <div>
-                <span className="text-slate-400">Member Since:</span> <span className="font-bold">2021</span>
+                <span className="text-slate-400">Account Status:</span>{' '}
+                <span className="font-bold text-white">{isRestricted ? 'Security Hold' : 'Normal'}</span>
               </div>
               <div>
-                <span className="text-slate-400">APY:</span> <span className="font-bold">{currentAccount.interestRate || '0.45'}%</span>
+                <span className="text-slate-400">Client:</span>{' '}
+                <span className="font-bold text-white">Justin Jefferson (10482)</span>
               </div>
               <div>
-                <span className="text-slate-400">Ledger Verified:</span>{' '}
-                <span className="font-mono text-[11px]">Today 12:00 PM</span>
+                <span className="text-slate-400">HQ Routing:</span>{' '}
+                <span className="font-mono text-[11px]">091000022</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5">
-              {currentAccount.status === 'Frozen' ? (
-                <button
-                  disabled
-                  className="px-4 py-2.5 rounded-xl bg-slate-300/20 text-slate-300 text-xs font-bold border border-white/10 cursor-not-allowed flex items-center gap-1.5 shadow-sm"
-                  title="Transfers are completely disabled for this account."
-                >
-                  <Lock className="w-3.5 h-3.5 text-rose-400" />
-                  Transfers Disabled
-                </button>
-              ) : (
-                <button
-                  onClick={onNavigateToTransfers}
-                  className="px-4 py-2.5 rounded-xl bg-white text-[#002855] text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm"
-                >
-                  Transfer Funds
-                </button>
-              )}
+              <button
+                onClick={onNavigateToTransfers}
+                className="px-4 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white text-xs font-bold transition-colors shadow-sm"
+              >
+                Transfer & Pay
+              </button>
               <button
                 onClick={onNavigateToTransactions}
                 className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-colors"
@@ -386,6 +385,131 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
         onNavigateToTransfers={onNavigateToTransfers}
       />
 
+      {/* AUTHENTIC U.S. BANK CARD CONTROLS & MANAGEMENT UI */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-bold text-[#0C2340]">Card Management & Digital Controls</h3>
+            <p className="text-xs text-slate-500">Security features, mobile wallet, and card status controls</p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-[#005A9C] border border-blue-200">
+            Instant Card Lock Protected
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Card Artwork */}
+          <div className="lg:col-span-5">
+            <div className="w-full max-w-sm mx-auto aspect-[1.586/1] rounded-2xl p-5 text-white shadow-xl relative overflow-hidden flex flex-col justify-between bg-gradient-to-tr from-[#0C2340] via-[#002244] to-[#005A9C]">
+              {/* Card Header: U.S. Bank logo + Contactless Waves */}
+              <div className="flex items-center justify-between">
+                <UsBankLogo size="sm" variant="light" />
+                <Wifi className="w-5 h-5 text-white/80 rotate-90" />
+              </div>
+
+              {/* EMV Chip */}
+              <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-200 to-amber-400 border border-amber-300 shadow-xs flex items-center justify-center opacity-90">
+                <div className="w-6 h-4 border border-amber-600/30 rounded-xs"></div>
+              </div>
+
+              {/* Card Number & Details */}
+              <div className="space-y-2">
+                <div className="font-mono text-base tracking-widest text-slate-100 drop-shadow-sm tabular-nums">
+                  •••• •••• •••• {currentAccount.accountNumberMasked.replace(/\D/g, '') || '4821'}
+                </div>
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-300">
+                  <div>
+                    <span className="text-[8px] block opacity-75">Cardholder</span>
+                    <span className="font-bold text-white">JUSTIN JEFFERSON</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[8px] block opacity-75">Expires</span>
+                    <span className="font-mono font-bold text-white">09/29</span>
+                  </div>
+                  <div className="font-black italic text-sm text-white">
+                    {currentAccount.type === 'credit' ? 'VISA' : 'DEBIT'}
+                  </div>
+                </div>
+              </div>
+
+              {cardLocked && (
+                <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center text-center p-4">
+                  <Lock className="w-8 h-8 text-rose-400 mb-1" />
+                  <span className="text-sm font-bold text-white">Card Temporarily Locked</span>
+                  <span className="text-[10px] text-slate-300">Transactions are currently blocked</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card Control Actions */}
+          <div className="lg:col-span-7 space-y-3">
+            {/* Toggle: Lock / Unlock Card */}
+            <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${cardLocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                  {cardLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Lock / Unlock Card</div>
+                  <div className="text-[11px] text-slate-500">
+                    {cardLocked ? 'Card is currently locked. Outgoing purchases will be declined.' : 'Card is active for retail and contactless transactions.'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setCardLocked(!cardLocked)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  cardLocked
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                }`}
+              >
+                {cardLocked ? 'Unlock Card' : 'Lock Card'}
+              </button>
+            </div>
+
+            {/* Digital Wallet */}
+            <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Digital Wallet (Apple Pay & Google Wallet)</div>
+                  <div className="text-[11px] text-slate-500">Card is provisioned and verified on client devices</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWalletModal(true)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#005A9C] hover:bg-[#004578] text-white"
+              >
+                View Details
+              </button>
+            </div>
+
+            {/* Report Lost or Stolen */}
+            <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Report Lost or Stolen</div>
+                  <div className="text-[11px] text-slate-500">Deactivate current card and request an expedited replacement</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLostStolenModal(true)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#DA291C] hover:bg-rose-50 border border-[#DA291C]/30"
+              >
+                Report Card
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Balance History Chart */}
       <BalanceHistoryChart
         data={chartData}
@@ -395,15 +519,15 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
       />
 
       {/* Recent Activity Snippet */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-6">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Recent Account Activity</h3>
+            <h3 className="text-base font-bold text-[#0C2340]">Recent Account Activity</h3>
             <p className="text-xs text-slate-500">Most recent transactions for {currentAccount.name}</p>
           </div>
           <button
             onClick={onNavigateToTransactions}
-            className="text-xs font-bold text-[#002855] hover:underline"
+            className="text-xs font-bold text-[#005A9C] hover:underline"
           >
             View all transactions →
           </button>
@@ -449,13 +573,13 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
 
                 <div className="text-right">
                   <div
-                    className={`text-xs font-bold font-mono ${
+                    className={`text-xs font-bold font-mono tabular-nums ${
                       isCredit ? 'text-emerald-700' : 'text-slate-900'
                     }`}
                   >
                     {isCredit ? '+' : '-'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono">
+                  <div className="text-[11px] text-slate-400 font-mono tabular-nums">
                     Bal: ${tx.runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
@@ -471,8 +595,8 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 text-slate-800 space-y-5 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#002855] flex items-center justify-center font-black">
-                  <Building className="w-5 h-5 text-[#002855]" />
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#005A9C] flex items-center justify-center font-black">
+                  <Building className="w-5 h-5 text-[#005A9C]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Change Account Routing Number</h3>
@@ -528,7 +652,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                         key={preset.number}
                         className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-blue-50/70 border-[#002855] text-slate-900 shadow-xs ring-1 ring-[#002855]'
+                            ? 'bg-blue-50/70 border-[#005A9C] text-slate-900 shadow-xs ring-1 ring-[#005A9C]'
                             : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
                         }`}
                       >
@@ -540,11 +664,11 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                             setSelectedRoutingPreset(preset.number);
                             setCustomRoutingInput('');
                           }}
-                          className="mt-0.5 text-[#002855] focus:ring-[#002855]"
+                          className="mt-0.5 text-[#005A9C] focus:ring-[#005A9C]"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono font-extrabold text-[#002855] text-sm">
+                            <span className="font-mono font-extrabold text-[#005A9C] text-sm">
                               {preset.number}
                             </span>
                             <span className="text-[11px] font-semibold text-slate-500">
@@ -568,7 +692,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                   <label
                     className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                       selectedRoutingPreset === 'custom'
-                        ? 'bg-blue-50/70 border-[#002855] text-slate-900 shadow-xs ring-1 ring-[#002855]'
+                        ? 'bg-blue-50/70 border-[#005A9C] text-slate-900 shadow-xs ring-1 ring-[#005A9C]'
                         : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
                     }`}
                   >
@@ -577,7 +701,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                       name="routingPreset"
                       checked={selectedRoutingPreset === 'custom'}
                       onChange={() => setSelectedRoutingPreset('custom')}
-                      className="mt-0.5 text-[#002855] focus:ring-[#002855]"
+                      className="mt-0.5 text-[#005A9C] focus:ring-[#005A9C]"
                     />
                     <div className="flex-1 min-w-0">
                       <span className="font-bold text-slate-900 block">Custom 9-Digit Routing Number</span>
@@ -592,7 +716,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                             value={customRoutingInput}
                             onChange={(e) => setCustomRoutingInput(e.target.value.replace(/\D/g, ''))}
                             placeholder="Enter 9 digits (e.g. 091000022)"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#002855] font-mono text-sm tracking-widest text-slate-900"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#005A9C] font-mono text-sm tracking-widest text-slate-900"
                             autoFocus
                           />
                         </div>
@@ -609,7 +733,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                     type="checkbox"
                     checked={applyToAllAccounts}
                     onChange={(e) => setApplyToAllAccounts(e.target.checked)}
-                    className="rounded text-[#002855] focus:ring-[#002855] w-4 h-4"
+                    className="rounded text-[#005A9C] focus:ring-[#005A9C] w-4 h-4"
                   />
                   <span>Apply updated routing number to all Justin Jefferson accounts</span>
                 </label>
@@ -627,7 +751,7 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                 <button
                   type="submit"
                   disabled={isUpdatingRouting}
-                  className="px-5 py-2.5 rounded-xl bg-[#002855] hover:bg-[#001f3f] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 disabled:opacity-50"
                 >
                   {isUpdatingRouting ? (
                     <>
@@ -643,6 +767,77 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Digital Wallet Modal */}
+      {showWalletModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="font-bold text-slate-900 text-sm">Digital Wallet Credentials</span>
+              <button onClick={() => setShowWalletModal(false)} className="p-1 rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <span className="font-bold text-slate-800">Apple Pay</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                  Provisioned on iPhone 16 Pro
+                </span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <span className="font-bold text-slate-800">Google Pay</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                  Active
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWalletModal(false)}
+              className="w-full py-2.5 bg-[#005A9C] text-white font-bold rounded-xl"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Lost or Stolen Modal */}
+      {showLostStolenModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2 text-[#DA291C] font-bold text-sm">
+                <AlertTriangle className="w-5 h-5" />
+                Report Lost or Stolen Card
+              </div>
+              <button onClick={() => setShowLostStolenModal(false)} className="p-1 rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              If your card ending in <strong>{currentAccount.accountNumberMasked.replace(/\D/g, '') || '4821'}</strong> has been misplaced or compromised, we can immediately deactivate it and dispatch an expedited replacement card to your registered address at <strong>1201 Nicollet Mall, Minneapolis, MN</strong>.
+            </p>
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowLostStolenModal(false)}
+                className="px-4 py-2 rounded-xl text-slate-600 font-semibold hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setCardLocked(true);
+                  setShowLostStolenModal(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#DA291C] hover:bg-red-700 text-white font-bold"
+              >
+                Deactivate & Replace Card
+              </button>
+            </div>
           </div>
         </div>
       )}

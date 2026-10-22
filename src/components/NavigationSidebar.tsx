@@ -10,13 +10,11 @@ import {
   User,
   HelpCircle,
   LogOut,
-  Building2,
-  Lock,
   ChevronRight,
-  ExternalLink,
   PieChart,
 } from 'lucide-react';
 import { Customer } from '../types/banking.ts';
+import { UsBankLogo } from './UsBankLogo.tsx';
 
 interface NavigationSidebarProps {
   currentTab: string;
@@ -37,10 +35,10 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'plan-track', label: 'Plan & Track', icon: PieChart },
     { id: 'accounts', label: 'Accounts Portfolio', icon: CreditCard },
+    { id: 'transfers', label: 'Transfer & Pay', icon: ArrowRightLeft },
+    { id: 'plan-track', label: 'Plan & Learn', icon: PieChart },
     { id: 'transactions', label: 'Transactions & Ledger', icon: Receipt },
-    { id: 'transfers', label: 'Transfers & Payments', icon: ArrowRightLeft },
     { id: 'statements', label: 'eStatements & Tax', icon: FileText },
     {
       id: 'notifications',
@@ -49,31 +47,24 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
       badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : null,
     },
     { id: 'security', label: 'Security Center', icon: Shield },
-    { id: 'profile', label: 'Customer Profile', icon: User },
+    { id: 'profile', label: 'Profile & Security', icon: User },
   ];
 
   return (
-    <aside className="w-64 bg-[#002855] text-white flex flex-col justify-between shrink-0 min-h-screen border-r border-[#001f3f] select-none">
+    <aside className="w-64 bg-[#0C2340] text-white flex flex-col justify-between shrink-0 min-h-screen border-r border-[#001830] select-none">
       {/* Brand & Logo Header */}
       <div>
-        <div className="p-6 border-b border-blue-900/60 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center font-extrabold text-2xl tracking-tight text-white select-none">
-              <span
-                style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 7px', borderRadius: '4px', marginRight: '3px' }}
-                className="text-base font-black uppercase tracking-tight"
-              >
-                us
-              </span>
-              <span>bank</span>
-            </div>
+        <div className="p-4 border-b border-white/10 flex items-center justify-center">
+          <div className="bg-white rounded-xl py-2 px-4 flex items-center justify-center shadow-xs w-full">
+            <UsBankLogo size="md" />
           </div>
         </div>
 
         {/* User Mini Profile Badge */}
         <div
           onClick={() => onNavigate('profile')}
-          className="mx-3 mt-4 p-3 rounded-2xl bg-blue-900/40 hover:bg-blue-900/60 border border-blue-800/40 cursor-pointer transition-colors flex items-center gap-3"
+          className="mx-3 mt-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-all flex items-center gap-3"
+          title="View Profile & Security"
         >
           <img
             src={customer.avatarUrl || '/avatar.jpg'}
@@ -81,17 +72,17 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
             onError={(e) => {
               e.currentTarget.src = '/avatar.jpg';
             }}
-            className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/20"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20"
           />
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-white truncate">{customer.name}</div>
-            <div className="text-[11px] text-blue-200 font-mono truncate">ID: {customer.id}</div>
+            <div className="text-[11px] text-slate-300 font-mono truncate">ID: {customer.id}</div>
           </div>
-          <ChevronRight className="w-4 h-4 text-blue-300 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
         </div>
 
         {/* Navigation Menu */}
-        <nav className="p-3 mt-4 space-y-1">
+        <nav className="p-3 mt-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -102,21 +93,17 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-white text-[#002855] shadow-sm font-bold'
-                    : 'text-blue-100 hover:text-white hover:bg-blue-900/50'
+                    ? 'bg-[#005A9C] text-white shadow-sm font-bold'
+                    : 'text-slate-200 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#002855]' : 'text-blue-300'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-300'}`} />
                   <span>{item.label}</span>
                 </div>
 
                 {item.badge && (
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                      isActive ? 'bg-[#cc0000] text-white' : 'bg-[#cc0000] text-white'
-                    }`}
-                  >
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#DA291C] text-white">
                     {item.badge}
                   </span>
                 )}
@@ -127,25 +114,25 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
       </div>
 
       {/* Bottom Auxiliary Links & Sign Out */}
-      <div className="p-4 border-t border-blue-900/60 space-y-2">
+      <div className="p-4 border-t border-white/10 space-y-2">
         <button
           onClick={onOpenHelp}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-blue-200 hover:text-white hover:bg-blue-900/40 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
         >
-          <HelpCircle className="w-4 h-4 text-blue-300" />
-          <span>Help & 24/7 Support</span>
+          <HelpCircle className="w-4 h-4 text-slate-400" />
+          <span>Customer Service</span>
         </button>
 
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-red-200 hover:text-white hover:bg-red-950/40 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:text-white hover:bg-[#DA291C]/30 transition-colors"
         >
-          <LogOut className="w-4 h-4 text-red-400" />
-          <span>Sign Out Session</span>
+          <LogOut className="w-4 h-4 text-rose-400" />
+          <span>Log Out</span>
         </button>
 
-        <div className="pt-2 text-[10px] text-blue-300 text-center font-mono">
-          US Bank TLS • Member FDIC
+        <div className="pt-2 text-[10px] text-slate-400 text-center font-mono">
+          U.S. Bank TLS • Member FDIC
         </div>
       </div>
     </aside>

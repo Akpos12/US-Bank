@@ -1,11 +1,27 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  :root {
+    --usbank-navy: #0C2340;
+    --usbank-navy-dark: #001A33;
+    --usbank-blue: #005A9C;
+    --usbank-blue-hover: #004578;
+    --usbank-red: #DA291C;
+    --usbank-bg: #F4F6F8;
+    --zelle-purple: #7414CA;
   }
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #F4F6F8;
+    color: #1A202C;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Currency and financial alignment */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
