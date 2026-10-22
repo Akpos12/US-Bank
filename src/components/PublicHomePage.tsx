@@ -321,17 +321,17 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
       {/* Main Header / Sticky Navbar */}
       <div className="sticky top-0 z-40 bg-white shadow-xs">
-        <header className="py-2.5 sm:py-3 px-3 sm:px-6 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
+        <header className="py-2.5 sm:py-3 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto flex items-center justify-between">
           {/* Left: Hamburger menu + Optional desktop navigation */}
-          <div className="w-24 sm:w-44 lg:w-56 flex items-center justify-start gap-3">
+          <div className="flex items-center justify-start gap-2 sm:gap-3 flex-1 sm:flex-initial min-w-[65px] sm:min-w-[140px] lg:w-56">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 -ml-1.5 text-[#40455A] hover:text-[#0C2340] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-2 -ml-1 text-[#40455A] hover:text-[#0C2340] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Menu"
               aria-label="Open Navigation Menu"
             >
               <svg
-                className="w-7 h-7 sm:w-8 sm:h-8"
+                className="w-6 h-6 sm:w-7 sm:h-7"
                 viewBox="0 0 28 28"
                 fill="none"
                 stroke="currentColor"
@@ -343,33 +343,38 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 <line x1="4" y1="21" x2="24" y2="21" />
               </svg>
             </button>
-            <span className="hidden lg:inline text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer" onClick={() => setMobileMenuOpen(true)}>
+            <span
+              className="hidden lg:inline text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+              onClick={() => setMobileMenuOpen(true)}
+            >
               Products & Services
             </span>
           </div>
 
           {/* Center: Exactly Centered Official U.S. Bank Logo */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center px-1 sm:px-2">
             <img
               src="/assets/usbank_logo_transparent.png"
               alt="U.S. Bank"
-              className="h-7 sm:h-9 md:h-11 w-auto object-contain cursor-pointer select-none transition-transform hover:scale-[1.01]"
+              className="h-7 sm:h-9 md:h-11 w-auto max-w-[125px] sm:max-w-[180px] md:max-w-none object-contain cursor-pointer select-none transition-transform hover:scale-[1.01]"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </div>
 
-          {/* Right: "Open an account" + "Log in" button */}
-          <div className="w-24 sm:w-44 lg:w-56 flex items-center justify-end gap-1.5 sm:gap-3">
+          {/* Right: "Open an account" + "Log in" button - ALWAYS visible across all sizes */}
+          <div className="flex items-center justify-end gap-1 sm:gap-2.5 flex-1 sm:flex-initial min-w-[110px] sm:min-w-[180px] lg:w-56">
             <button
               onClick={() => openWizardFor('checking')}
-              className="hidden sm:inline-flex items-center justify-center bg-[#005A9C] hover:bg-[#004578] text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center bg-[#005A9C] hover:bg-[#004578] text-white text-xs sm:text-sm font-bold px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-colors shadow-xs cursor-pointer whitespace-nowrap min-h-[38px] sm:min-h-[42px]"
             >
-              Open an account
+              <span className="min-[480px]:hidden">Open</span>
+              <span className="hidden min-[480px]:inline sm:hidden">Open account</span>
+              <span className="hidden sm:inline">Open an account</span>
             </button>
 
             <button
               onClick={() => setShowLoginModal(true)}
-              className="text-[#395ACE] hover:text-[#162B7C] font-bold text-sm sm:text-base sm:text-lg transition-colors px-1 py-1 cursor-pointer select-none whitespace-nowrap"
+              className="text-[#395ACE] hover:text-[#162B7C] font-bold text-xs sm:text-base transition-colors px-1.5 sm:px-2 py-1.5 rounded-lg hover:bg-blue-50/50 cursor-pointer select-none whitespace-nowrap min-h-[38px] sm:min-h-[42px] flex items-center"
             >
               Log in
             </button>
@@ -511,47 +516,48 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       {/* Hero Section */}
       <section
         style={{ background: 'linear-gradient(135deg, #0c2340 0%, #133a6f 100%)' }}
-        className="text-white py-14 sm:py-20 lg:py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
+        className="text-white py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
       >
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="max-w-2xl space-y-5 text-left">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="lg:col-span-7 space-y-5 text-left w-full">
             <span
               style={{ borderBottom: '3px solid #da291c' }}
               className="text-xs sm:text-sm uppercase tracking-widest font-extrabold pb-1 inline-block text-slate-100"
             >
               U.S. Bank Smartly® Banking
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
               Score up to $450 with U.S. Bank Smartly® Checking
             </h1>
-            <p className="text-base sm:text-lg text-slate-200 opacity-95 leading-relaxed max-w-xl">
+            <p className="text-sm sm:text-base lg:text-lg text-slate-200 opacity-95 leading-relaxed max-w-2xl">
               Open a new account in minutes, set up qualifying direct deposits, and experience elite digital banking tools, personalized private wealth options, and 24/7 account protection.
             </p>
-            <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
+            {/* Buttons: full width stacked on mobile, inline on tablet & desktop */}
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => openWizardFor('checking')}
-                className="bg-[#005A9C] hover:bg-[#004578] text-white font-extrabold px-7 py-3.5 rounded-xl text-sm sm:text-base transition-colors shadow-lg flex items-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[48px] bg-[#005A9C] hover:bg-[#004578] text-white font-extrabold px-7 py-3 rounded-xl text-base transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Open an Account</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setShowBonusModal(true)}
-                className="bg-white hover:bg-slate-100 text-[#0c2340] font-extrabold px-6 py-3.5 rounded-xl text-sm sm:text-base transition-colors shadow-md cursor-pointer"
+                className="w-full sm:w-auto min-h-[48px] bg-white hover:bg-slate-100 text-[#0c2340] font-extrabold px-6 py-3 rounded-xl text-base transition-colors shadow-md flex items-center justify-center cursor-pointer"
               >
                 Earn $450 bonus
               </button>
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="bg-transparent hover:bg-white/10 text-white border border-white/60 hover:border-white font-semibold px-5 py-3.5 rounded-xl text-sm transition-colors cursor-pointer"
+                className="w-full sm:w-auto min-h-[48px] bg-transparent hover:bg-white/10 text-white border border-white/60 hover:border-white font-semibold px-5 py-3 rounded-xl text-base transition-colors flex items-center justify-center cursor-pointer"
               >
                 Sign In
               </button>
             </div>
           </div>
 
-          {/* Hero visual card */}
-          <div className="hidden lg:block shrink-0 w-84 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl space-y-4">
+          {/* Hero visual card - visible on tablet & desktop */}
+          <div className="hidden md:block lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none bg-white/10 backdrop-blur-md p-6 sm:p-7 rounded-2xl border border-white/20 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-[#da291c] text-white flex items-center justify-center font-bold text-xs">
@@ -564,12 +570,12 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                   <div className="text-[11px] text-blue-200">Checking Relationship</div>
                 </div>
               </div>
-              <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-0.5 rounded-full">
                 Active Offer
               </span>
             </div>
 
-            <div className="text-4xl font-black text-white font-mono">$450 BONUS</div>
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono">$450 BONUS</div>
             <p className="text-xs text-slate-200 leading-relaxed">
               Earn $450 when you open an account and complete qualifying direct deposits totaling $3,000 within 90 days.
             </p>
@@ -591,7 +597,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
             <button
               onClick={() => openWizardFor('checking')}
-              className="w-full py-2.5 bg-white text-[#0c2340] hover:bg-slate-100 font-extrabold rounded-xl text-xs transition-colors shadow-sm"
+              className="w-full min-h-[44px] bg-white text-[#0c2340] hover:bg-slate-100 font-extrabold rounded-xl text-xs sm:text-sm transition-colors shadow-sm flex items-center justify-center cursor-pointer"
             >
               Start Application
             </button>
@@ -600,30 +606,30 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Trust Badges Strip */}
-      <section className="bg-slate-100 border-y border-slate-200 py-4 px-6 sm:px-10">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-around gap-4 sm:gap-8 text-xs font-semibold text-slate-700">
+      <section className="bg-slate-100 border-y border-slate-200 py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-xs font-semibold text-slate-700">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Member FDIC Protection up to $250,000</span>
           </div>
           <div className="flex items-center gap-2">
-            <EqualHousingLenderIcon className="w-4 h-4 text-slate-700" />
+            <EqualHousingLenderIcon className="w-4 h-4 text-slate-700 shrink-0" />
             <span>Equal Housing Lender</span>
           </div>
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-[#005A9C]" />
+            <Lock className="w-4 h-4 text-[#005A9C] shrink-0" />
             <span>256-Bit TLS Bank-Grade Encryption</span>
           </div>
           <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-[#da291c]" />
+            <Award className="w-4 h-4 text-[#da291c] shrink-0" />
             <span>Trusted by Over 12 Million Clients</span>
           </div>
         </div>
       </section>
 
       {/* Trust & Security Section */}
-      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white">
-        <div className="max-w-6xl mx-auto space-y-10">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs uppercase tracking-widest font-extrabold text-[#da291c]">
               Enterprise-Grade Financial Protection
@@ -681,8 +687,8 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Solutions Grid Section (6 Comprehensive Product Cards) */}
-      <section style={{ backgroundColor: '#f4f6f9' }} className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <section style={{ backgroundColor: '#f4f6f9' }} className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <div className="relative inline-block mb-3">
@@ -698,19 +704,19 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
             <button
               onClick={() => openWizardFor('checking')}
-              className="bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto"
+              className="min-h-[44px] bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
             >
               Open an Account Today
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {solutions.map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.id}
-                  className="bg-white p-7 rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between group"
+                  className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -753,13 +759,13 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                             setActiveProduct(item);
                           }
                         }}
-                        className="flex-1 py-2 bg-[#005A9C] hover:bg-[#004578] text-white text-xs font-bold rounded-lg transition-colors text-center shadow-xs"
+                        className="flex-1 min-h-[44px] py-2 bg-[#005A9C] hover:bg-[#004578] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors text-center shadow-xs cursor-pointer flex items-center justify-center"
                       >
                         Open Account
                       </button>
                       <button
                         onClick={() => setActiveProduct(item)}
-                        className="py-2 px-3 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                        className="min-h-[44px] py-2 px-3 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                       >
                         Details
                       </button>
@@ -767,7 +773,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
                     <div
                       onClick={() => setActiveProduct(item)}
-                      className="flex items-center justify-between text-xs font-bold text-[#005A9C] cursor-pointer hover:underline"
+                      className="flex items-center justify-between text-xs font-bold text-[#005A9C] cursor-pointer hover:underline pt-1"
                     >
                       <span>View full rates & disclosures</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -781,8 +787,8 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Benefits Section */}
-      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white border-t border-slate-200">
-        <div className="max-w-6xl mx-auto space-y-12">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs uppercase tracking-widest font-extrabold text-[#005A9C]">
               Why Choose U.S. Bank
@@ -830,8 +836,8 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Sports Partnership & Youth Athletics Community Section */}
-      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto space-y-8">
           <div>
             <div className="relative inline-block mb-3">
               <h2 className="text-xs uppercase tracking-widest font-extrabold text-[#da291c]">
@@ -852,7 +858,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Interactive FAQ Section */}
-      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white border-t border-slate-200">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-slate-200">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <span className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
@@ -876,7 +882,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 >
                   <button
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 hover:bg-slate-50 cursor-pointer transition-colors min-h-[48px]"
                   >
                     <span className="font-bold text-sm sm:text-base text-[#0c2340]">
                       {faq.question}
@@ -904,16 +910,16 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 Our client specialists are ready to guide you 24 hours a day, 7 days a week.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setShowSupportModal(true)}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs"
+                className="w-full sm:w-auto min-h-[42px] px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center"
               >
                 Call 1-800-USBANKS
               </button>
               <button
                 onClick={() => openWizardFor('checking')}
-                className="px-5 py-2 bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs rounded-xl shadow-xs"
+                className="w-full sm:w-auto min-h-[42px] px-5 py-2 bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center"
               >
                 Open Account
               </button>
@@ -923,8 +929,8 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto bg-[#0c2340] text-white py-12 px-6 sm:px-10 lg:px-16 border-t border-[#133a6f] text-xs">
-        <div className="max-w-6xl mx-auto space-y-10">
+      <footer className="mt-auto bg-[#0c2340] text-white py-12 px-4 sm:px-6 lg:px-8 border-t border-[#133a6f] text-xs">
+        <div className="max-w-7xl mx-auto space-y-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-white/10">
             <UsBankLogo size="lg" variant="light" />
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-slate-300">
@@ -956,7 +962,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-slate-300 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-slate-300 text-xs">
             <div className="space-y-2">
               <div className="font-bold text-white uppercase tracking-wider text-[11px]">
                 Banking Products

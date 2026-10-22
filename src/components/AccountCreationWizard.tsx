@@ -407,14 +407,14 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 })}
               </div>
 
-              <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-                <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
+                <div className="text-xs text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 py-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>FDIC Insured up to $250,000</span>
                 </div>
                 <button
                   onClick={handleStep1Next}
-                  className="px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all"
+                  className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-4 h-4" />
@@ -435,7 +435,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     First Name
@@ -446,7 +446,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     placeholder="e.g. Justin"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
                 <div>
@@ -459,7 +459,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     placeholder="e.g. Jefferson"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
@@ -469,14 +469,14 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
                     placeholder="e.g. justin.jefferson@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
@@ -486,19 +486,19 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                   Mobile Phone Number
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="tel"
                     required
                     placeholder="(612) 555-0199"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Create Password
@@ -510,12 +510,12 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                       placeholder="Minimum 8 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full p-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                      className="w-full min-h-[46px] p-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -523,7 +523,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                   {/* Strength Bar */}
                   {password && (
                     <div className="mt-2 space-y-1">
-                      <div className="flex gap-1 h-1">
+                      <div className="flex gap-1 h-1.5">
                         <div
                           className={`flex-1 rounded-full ${
                             passwordStrength >= 1 ? 'bg-red-500' : 'bg-slate-200'
@@ -545,7 +545,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                           }`}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[11px] text-slate-500">
                         {passwordStrength <= 1
                           ? 'Weak password'
                           : passwordStrength <= 2
@@ -568,23 +568,23 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     placeholder="Re-enter password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-between border-t border-slate-100">
+              <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back</span>
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all"
+                  className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-4 h-4" />
@@ -610,14 +610,14 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                   Residential Street Address
                 </label>
                 <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     placeholder="e.g. 1201 Nicollet Mall, Suite 400"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
@@ -633,7 +633,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     placeholder="Minneapolis"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
                 <div>
@@ -643,7 +643,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                   <select
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm font-semibold text-slate-900"
                   >
                     <option value="MN">Minnesota (MN)</option>
                     <option value="IL">Illinois (IL)</option>
@@ -665,24 +665,24 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     placeholder="55403"
                     value={zip}
                     onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                    className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Date of Birth
                   </label>
                   <div className="relative">
-                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="date"
                       required
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                      className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                     />
                   </div>
                 </div>
@@ -692,7 +692,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                     Social Security Number (Last 4 Digits)
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="password"
                       maxLength={4}
@@ -700,10 +700,10 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                       placeholder="••••"
                       value={ssnLast4}
                       onChange={(e) => setSsnLast4(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
+                      className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm font-mono tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#005A9C]"
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1 block">
+                  <span className="text-[11px] text-slate-400 mt-1 block">
                     Used strictly for identity verification. 256-bit encrypted.
                   </span>
                 </div>
@@ -716,7 +716,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 <select
                   value={income}
                   onChange={(e) => setIncome(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+                  className="w-full min-h-[46px] p-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900"
                 >
                   <option value="Under $50,000">Under $50,000</option>
                   <option value="$50,000 - $100,000">$50,000 - $100,000</option>
@@ -726,18 +726,18 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 </select>
               </div>
 
-              <div className="pt-4 flex items-center justify-between border-t border-slate-100">
+              <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back</span>
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all"
+                  className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <span>Review Application</span>
                   <ArrowRight className="w-4 h-4" />
@@ -759,7 +759,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
               </div>
 
               {/* Application Summary Card */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs sm:text-sm">
                 <div className="flex justify-between pb-2 border-b border-slate-200">
                   <span className="text-slate-500">Selected Product:</span>
                   <span className="font-bold text-[#0C2340] capitalize">{selectedType} Account</span>
@@ -787,51 +787,51 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
               </div>
 
               {/* Consent Checkboxes */}
-              <div className="space-y-3 pt-1 text-xs text-slate-700">
-                <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+              <div className="space-y-3 pt-1 text-xs sm:text-sm text-slate-700">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors min-h-[48px]">
                   <input
                     type="checkbox"
                     checked={agreeTerms}
                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C]"
+                    className="mt-1 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C] shrink-0"
                   />
-                  <div className="text-[11px] leading-relaxed">
+                  <div className="text-xs leading-relaxed">
                     <span className="font-bold text-slate-900">Deposit Account & E-Sign Disclosure: </span>
                     I agree to the U.S. Bank Terms of Service, Electronic Funds Transfer Agreement, and Privacy Policy.
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors min-h-[48px]">
                   <input
                     type="checkbox"
                     checked={agreeCredit}
                     onChange={(e) => setAgreeCredit(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C]"
+                    className="mt-1 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C] shrink-0"
                   />
-                  <div className="text-[11px] leading-relaxed">
+                  <div className="text-xs leading-relaxed">
                     <span className="font-bold text-slate-900">Identity & Credit Inquiry Authorization: </span>
                     I authorize U.S. Bank National Association to verify my identity and obtain consumer reports as needed.
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors min-h-[48px]">
                   <input
                     type="checkbox"
                     checked={agreeMarketing}
                     onChange={(e) => setAgreeMarketing(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C]"
+                    className="mt-1 w-4 h-4 rounded text-[#005A9C] focus:ring-[#005A9C] shrink-0"
                   />
-                  <div className="text-[11px] text-slate-500 leading-relaxed">
+                  <div className="text-xs text-slate-500 leading-relaxed">
                     Optional: Keep me updated on interest rate promotions, cash bonus opportunities, and financial advisory alerts.
                   </div>
                 </label>
               </div>
 
-              <div className="pt-4 flex items-center justify-between border-t border-slate-100">
+              <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(3)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back</span>
@@ -839,7 +839,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 <button
                   type="submit"
                   disabled={loading || !agreeTerms || !agreeCredit}
-                  className="px-7 py-3 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs shadow-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full sm:w-auto min-h-[48px] px-7 py-3 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -871,7 +871,7 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
                 <h2 className="text-2xl font-black text-[#0C2340] mt-3">
                   Welcome to U.S. Bank, {firstName}!
                 </h2>
-                <p className="text-xs text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
                   Your new account has been successfully provisioned on the authoritative banking ledger. You can now transfer funds, deposit checks, and activate Zelle®.
                 </p>
               </div>
@@ -902,14 +902,14 @@ export const AccountCreationWizard: React.FC<AccountCreationWizardProps> = ({
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={handleCompleteAndSignIn}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Launch Online Banking Portal</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs"
+                  className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-sm flex items-center justify-center cursor-pointer"
                 >
                   Return to Homepage
                 </button>
