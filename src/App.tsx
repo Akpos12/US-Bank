@@ -76,14 +76,23 @@ export default function App() {
     }
 
     try {
-      const [meRes, notifRes] = await Promise.all([
-        api.getMe(),
-        api.getNotifications(),
-      ]);
-      setCustomer(meRes.customer);
-      setAccounts(meRes.accounts);
-      setNotifications(notifRes);
-      setIsAuthenticated(true);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Auth check timeout')), 3500)
+      );
+
+      const [meRes, notifRes] = (await Promise.race([
+        Promise.all([api.getMe(), api.getNotifications()]),
+        timeoutPromise,
+      ])) as any;
+
+      if (meRes && meRes.customer) {
+        setCustomer(meRes.customer);
+        setAccounts(meRes.accounts || []);
+        setNotifications(notifRes || []);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
     } catch (err) {
       console.warn('Session expired or invalid:', err);
       api.clearToken();

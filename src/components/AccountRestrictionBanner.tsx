@@ -31,7 +31,11 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
 }) => {
   const [showModal, setShowModal] = useState(false);
 
-  // If the account does not have restriction active, do not render
+  // If the account is undefined or does not have restriction active, do not render
+  if (!account) {
+    return null;
+  }
+
   const isRestricted =
     account.status === 'Transfers Temporarily Restricted' ||
     account.restriction?.restriction_active;

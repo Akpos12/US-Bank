@@ -10,6 +10,7 @@ interface UsBankLogoProps {
 export const UsBankLogo: React.FC<UsBankLogoProps> = ({
   className = '',
   size = 'md',
+  variant = 'dark',
   alt = 'U.S. Bank',
 }) => {
   const sizeClasses = {
@@ -19,18 +20,34 @@ export const UsBankLogo: React.FC<UsBankLogoProps> = ({
     xl: 'h-12 sm:h-14',
   };
 
-  return (
+  const imageElement = (
     <img
       src="/assets/usbank_logo_transparent.png"
       alt={alt}
-      className={`w-auto object-contain select-none transition-all ${sizeClasses[size] || 'h-8'} ${className}`}
+      className={`w-auto object-contain select-none transition-all ${sizeClasses[size] || 'h-8'} ${
+        variant === 'dark' ? className : ''
+      }`}
       loading="eager"
       decoding="async"
     />
   );
+
+  if (variant === 'light' || variant === 'white') {
+    return (
+      <div
+        className={`inline-flex items-center justify-center bg-white rounded-xl px-2.5 py-1 shadow-xs ${className}`}
+      >
+        {imageElement}
+      </div>
+    );
+  }
+
+  return imageElement;
 };
 
-export const EqualHousingLenderIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+export const EqualHousingLenderIcon: React.FC<{ className?: string }> = ({
+  className = 'w-4 h-4',
+}) => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"
@@ -38,7 +55,7 @@ export const EqualHousingLenderIcon: React.FC<{ className?: string }> = ({ class
     aria-label="Equal Housing Lender"
   >
     <title>Equal Housing Lender</title>
-    {/* House roof */}
+    {/* House roof and frame */}
     <path d="M12 2L2 10.5h3v9.5h14V10.5h3L12 2z" />
     {/* Equal sign cut out from center */}
     <rect x="7.5" y="11" width="9" height="1.8" rx="0.5" fill="white" />

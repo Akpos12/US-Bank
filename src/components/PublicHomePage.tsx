@@ -18,17 +18,22 @@ import {
   EyeOff,
   User,
   ChevronRight,
+  ChevronDown,
   AlertCircle,
   Building2,
   CheckCircle2,
   Phone,
   Clock,
   Sparkles,
+  Smartphone,
+  Award,
+  Zap,
 } from 'lucide-react';
 import { Customer, Account } from '../types/banking.ts';
 import { api } from '../services/api.ts';
 import { SportsPromoSection } from './SportsPromoSection.tsx';
 import { UsBankLogo, EqualHousingLenderIcon } from './UsBankLogo.tsx';
+import { AccountCreationWizard } from './AccountCreationWizard.tsx';
 
 interface PublicHomePageProps {
   onLoginSuccess: (customer: Customer, accounts: Account[]) => void;
@@ -36,6 +41,7 @@ interface PublicHomePageProps {
 }
 
 interface SolutionDetail {
+  id: 'checking' | 'savings' | 'credit' | 'business' | 'loan' | 'mortgage';
   title: string;
   tagline: string;
   desc: string;
@@ -59,6 +65,12 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Account Creation Wizard State
+  const [showAccountWizard, setShowAccountWizard] = useState(false);
+  const [wizardAccountType, setWizardAccountType] = useState<
+    'checking' | 'savings' | 'credit' | 'business'
+  >('checking');
+
   // Forgot password inline state
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('justin.jefferson@example.com');
@@ -76,6 +88,14 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
   // Customer support modal
   const [showSupportModal, setShowSupportModal] = useState(false);
 
+  // FAQ Accordion State
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const openWizardFor = (type: 'checking' | 'savings' | 'credit' | 'business') => {
+    setWizardAccountType(type);
+    setShowAccountWizard(true);
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -85,7 +105,9 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       const res = await api.login(identifier, password, rememberMe);
       onLoginSuccess(res.customer, res.accounts);
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify your Customer ID and Password.');
+      setError(
+        err.message || 'Authentication failed. Please verify your Customer ID and Password.'
+      );
     } finally {
       setLoading(false);
     }
@@ -98,94 +120,128 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
   const solutions: SolutionDetail[] = [
     {
-      title: 'Credit cards',
-      tagline: 'U.S. Bank Altitude® Go Visa Signature® Card',
-      desc: 'Earn rewards, cash back, or low introductory APRs with cards designed for your lifestyle.',
-      icon: CreditCard,
-      highlight: 'Earn up to 4% Cash Back',
-      rateOrReward: '4X points on dining, 2X on groceries and gas, 1X on all other purchases',
-      feeInfo: '$0 Annual Fee • 0% Intro APR for 15 billing cycles',
-      features: [
-        '20,000 bonus points after spending $1,000 in first 90 days ($200 value)',
-        '$15 annual streaming credit on Spotify, Netflix, or Apple Music',
-        'Contactless tap to pay with zero fraud liability protection',
-        'Complimentary credit score monitoring with TransUnion® VantageScore®',
-      ],
-    },
-    {
-      title: 'Checking',
+      id: 'checking',
+      title: 'Checking Accounts',
       tagline: 'U.S. Bank Smartly® Checking',
-      desc: 'Simple, modern accounts with zero hidden fees and intuitive mobile money management tools.',
+      desc: 'Simple, modern accounts with zero hidden fees, intuitive mobile money management, and cash bonus perks.',
       icon: Wallet,
       highlight: 'Earn up to $450 Bonus',
-      rateOrReward: 'Score up to $450 with qualifying direct deposit activities',
-      feeInfo: '$0 Monthly Maintenance Fee with qualifying balance or recurring deposit',
+      rateOrReward: 'Score up to $450 with qualifying recurring direct deposits',
+      feeInfo: '$0 Monthly Maintenance Fee with qualifying balance or direct deposit',
       features: [
-        'Fast online application with instant account number issuance',
-        'Zelle® integration for instantaneous peer-to-peer transfers',
-        'Real-time automated fraud alerts and biometric debit card controls',
+        'Instant online application with immediate account issuance',
+        'Zelle® integration for fast peer-to-peer transfers',
+        'Real-time automated fraud alerts and debit card lock',
         'Fee waivers at thousands of partner ATMs nationwide',
       ],
     },
     {
-      title: 'Savings',
-      tagline: 'U.S. Bank Elite Standard & High-Yield Savings',
-      desc: 'Grow your wealth with competitive interest rates and FDIC insurance protection.',
+      id: 'savings',
+      title: 'Savings Accounts',
+      tagline: 'U.S. Bank High-Yield Savings',
+      desc: 'Accelerate your wealth building with highly competitive interest rates and full FDIC protection.',
       icon: PiggyBank,
-      highlight: 'Up to 4.25% APY',
-      rateOrReward: 'Earn up to 4.25% Annual Percentage Yield',
+      highlight: 'Special 4.50% APY',
+      rateOrReward: 'Earn 4.50% Annual Percentage Yield with relationship tiering',
       feeInfo: '$0 Monthly Fee when linked with U.S. Bank Smartly® Checking',
       features: [
-        'Automated recurring deposit schedules to accelerate wealth building',
-        'FDIC insured up to legal limits of $250,000 per depositor',
-        'Real-time interest accrual and automated monthly crediting',
-        'No lock-in period; withdraw or transfer anytime without penalty',
+        'Automated recurring deposit schedules to grow reserves',
+        'FDIC insured up to legal limit of $250,000 per depositor',
+        'Real-time interest accrual and monthly crediting',
+        'No lock-in duration; withdraw anytime without penalty',
       ],
     },
     {
-      title: 'CDs',
-      tagline: 'Certificate of Deposit Fixed Return Specials',
-      desc: 'Lock in guaranteed high returns with our fixed-rate Certificate of Deposit accounts.',
-      icon: BadgeDollarSign,
-      highlight: 'Special 4.50% APY Rate',
-      rateOrReward: '4.50% APY on 7-Month and 11-Month Special Term CDs',
-      feeInfo: 'Guaranteed fixed rate for the entire maturity duration',
+      id: 'credit',
+      title: 'Credit Cards',
+      tagline: 'U.S. Bank Altitude® Reserve Visa',
+      desc: 'Premium travel benefits, lucrative cash back categories, and zero fraud liability protection.',
+      icon: CreditCard,
+      highlight: '50,000 Bonus Points',
+      rateOrReward: '3X points on travel and mobile wallet spending',
+      feeInfo: '$325 Annual Travel & Dining Credit included',
       features: [
-        'Guaranteed return unaffected by market volatility',
-        'Minimum opening deposit of $500',
-        'Automatic rollover renewal notification 30 days prior to maturity',
-        'Eligible for IRA retirement portfolio tax advantages',
+        '50,000 points after $4,500 spend in first 90 days ($750 value)',
+        'Complimentary Priority Pass™ Select airport lounge access',
+        'No foreign transaction fees on international travel',
+        'Zero fraud liability protection with 24/7 security concierge',
       ],
     },
     {
-      title: 'Mortgage',
-      tagline: 'Conventional, FHA, VA & Jumbo Home Loans',
-      desc: 'Purchase your dream home or refinance with dedicated lending specialists in your city.',
+      id: 'loan',
+      title: 'Personal Loans',
+      tagline: 'Fixed-Rate Unsecured Financing',
+      desc: 'Consolidate high-interest debt or fund home improvements with predictable monthly payments.',
+      icon: BadgeDollarSign,
+      highlight: 'Rates from 6.99% APR',
+      rateOrReward: 'Competitive fixed APR with relationship discount of 0.50%',
+      feeInfo: '$0 Origination Fees • No Prepayment Penalties',
+      features: [
+        'Borrow up to $50,000 with flexible terms from 12 to 84 months',
+        'Fast online credit decision often within minutes',
+        'Funds deposited directly to your U.S. Bank checking account',
+        'Fixed monthly payment that never changes over the loan life',
+      ],
+    },
+    {
+      id: 'mortgage',
+      title: 'Mortgages & Lending',
+      tagline: 'Home Purchase & Refinancing Solutions',
+      desc: 'Turn your homeownership dreams into reality with dedicated mortgage specialists and relationship credits.',
       icon: Home,
       highlight: 'Competitive Fixed Rates',
-      rateOrReward: 'Fixed and adjustable rate terms with custom down payment programs',
-      feeInfo: 'Exclusive closing cost credits for existing relationship customers',
+      rateOrReward: 'Conventional, FHA, VA and Jumbo home loan programs',
+      feeInfo: 'Exclusive closing cost credits for private wealth clients',
       features: [
-        'Instant online pre-approval letters to submit with your purchase offers',
-        'Dedicated personal loan officer throughout underwriting and closing',
-        'Rate lock guarantee options while your application is processed',
-        'First-time homebuyer assistance and down payment grant counseling',
+        'Instant online pre-approval letter for competitive offers',
+        'Dedicated personal loan officer throughout closing',
+        'Custom rate lock protection while your loan is processed',
+        'First-time homebuyer grant assistance programs available',
       ],
     },
     {
-      title: 'Investing',
-      tagline: 'U.S. Bancorp Investments & Private Wealth Advisory',
-      desc: 'Build your long-term portfolio with private wealth management advisors and automated tools.',
-      icon: TrendingUp,
-      highlight: 'Personalized Strategies',
-      rateOrReward: 'Bespoke portfolio management, retirement planning & estate guidance',
-      feeInfo: 'Transparent advisory fee structures tailored to portfolio tier',
+      id: 'business',
+      title: 'Business Banking',
+      tagline: 'Business Smartly® Checking & Treasury',
+      desc: 'Powerful financial tools, merchant processing, and commercial credit lines designed for growing businesses.',
+      icon: Building2,
+      highlight: '$500 Business Incentive',
+      rateOrReward: 'Earn up to $500 cash incentive upon qualifying deposits',
+      feeInfo: 'Waivable monthly maintenance with minimum commercial balance',
       features: [
-        'Dedicated CERTIFIED FINANCIAL PLANNER™ (CFP®) advisory team',
-        'Diversified asset allocation spanning equities, fixed income & private equity',
-        'Tax-loss harvesting and estate wealth preservation frameworks',
-        'Unified view inside your U.S. Bank digital banking dashboard',
+        'Up to 150 free monthly business ledger transactions',
+        'Complimentary employee debit cards with spending controls',
+        'Seamless integration with QuickBooks, Xero, and payroll',
+        'Dedicated commercial treasury relationship manager',
       ],
+    },
+  ];
+
+  const faqs = [
+    {
+      question: 'What do I need to open a U.S. Bank account online?',
+      answer:
+        'To open an account online, you must be at least 18 years old and a legal U.S. resident. Have your Social Security Number (or ITIN), government-issued ID (driver’s license or state ID), residential address, and routing/account information for your opening deposit ready. The online process takes less than 5 minutes.',
+    },
+    {
+      question: 'How do I qualify for the $450 checking account bonus?',
+      answer:
+        'To earn the $450 cash reward, open a new U.S. Bank Smartly® Checking account online, enroll in online or mobile banking, and receive qualifying recurring direct deposits totaling $3,000 or more within 90 days of account opening. The bonus is deposited directly into your new checking account within 60 days of meeting requirements.',
+    },
+    {
+      question: 'Are my deposits protected by FDIC insurance?',
+      answer:
+        'Yes. U.S. Bank is an FDIC-insured institution (FDIC Certificate #4821). Deposits in checking, savings, money market, and CD accounts are insured up to the standard maximum of $250,000 per depositor, for each account ownership category.',
+    },
+    {
+      question: 'How quickly can I access my account and transfer funds after opening?',
+      answer:
+        'Upon submitting your application and passing electronic identity verification, your account number and routing transit (091000022) are generated immediately. You can instantly register your online banking credentials, activate Zelle®, deposit checks via mobile photo, and initiate external transfers right away.',
+    },
+    {
+      question: 'What should I do if I notice an unrecognized charge or suspect fraud?',
+      answer:
+        'U.S. Bank provides a Zero Fraud Liability Guarantee on unauthorized transactions. You can instantly freeze or lock your debit or credit card inside your mobile app or online portal. For immediate assistance, contact our 24/7 Fraud Security Center at 1-877-595-6256.',
     },
   ];
 
@@ -222,13 +278,28 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans">
-      {/* Utility Top Bar */}
+      {/* Utility Top Bar (Desktop) */}
       <div className="bg-slate-100 border-b border-slate-200 text-xs py-2 px-4 sm:px-8 hidden md:flex items-center justify-between text-slate-600">
         <div className="flex items-center gap-6">
           <span className="font-bold text-[#0c2340] border-b-2 border-[#da291c] pb-0.5">Personal</span>
-          <span className="hover:text-slate-900 cursor-pointer transition-colors" onClick={() => setShowLoginModal(true)}>Business</span>
-          <span className="hover:text-slate-900 cursor-pointer transition-colors" onClick={() => setShowLoginModal(true)}>Wealth Management</span>
-          <span className="hover:text-slate-900 cursor-pointer transition-colors" onClick={() => setShowLoginModal(true)}>Commercial</span>
+          <span
+            className="hover:text-slate-900 cursor-pointer transition-colors"
+            onClick={() => openWizardFor('business')}
+          >
+            Business
+          </span>
+          <span
+            className="hover:text-slate-900 cursor-pointer transition-colors"
+            onClick={() => setShowLoginModal(true)}
+          >
+            Wealth Management
+          </span>
+          <span
+            className="hover:text-slate-900 cursor-pointer transition-colors"
+            onClick={() => setShowLoginModal(true)}
+          >
+            Commercial
+          </span>
           <span className="hover:text-slate-900 cursor-pointer transition-colors">About Us</span>
         </div>
         <div className="flex items-center gap-5">
@@ -248,11 +319,11 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         </div>
       </div>
 
-      {/* Main Header / Navbar inspired by authentic U.S. Bank reference image */}
-      <div className="sticky top-0 z-40 bg-white">
-        <header className="py-3 px-4 sm:px-8 max-w-7xl mx-auto flex items-center justify-between">
-          {/* Left: Hamburger menu */}
-          <div className="w-20 sm:w-28 flex items-center justify-start">
+      {/* Main Header / Sticky Navbar */}
+      <div className="sticky top-0 z-40 bg-white shadow-xs">
+        <header className="py-2.5 sm:py-3 px-3 sm:px-6 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
+          {/* Left: Hamburger menu + Optional desktop navigation */}
+          <div className="w-24 sm:w-44 lg:w-56 flex items-center justify-start gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1.5 -ml-1.5 text-[#40455A] hover:text-[#0C2340] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
@@ -272,6 +343,9 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 <line x1="4" y1="21" x2="24" y2="21" />
               </svg>
             </button>
+            <span className="hidden lg:inline text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer" onClick={() => setMobileMenuOpen(true)}>
+              Products & Services
+            </span>
           </div>
 
           {/* Center: Exactly Centered Official U.S. Bank Logo */}
@@ -279,16 +353,23 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
             <img
               src="/assets/usbank_logo_transparent.png"
               alt="U.S. Bank"
-              className="h-8 sm:h-10 md:h-11 w-auto object-contain cursor-pointer select-none transition-transform hover:scale-[1.01]"
+              className="h-7 sm:h-9 md:h-11 w-auto object-contain cursor-pointer select-none transition-transform hover:scale-[1.01]"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </div>
 
-          {/* Right: "Log in" button */}
-          <div className="w-20 sm:w-28 flex items-center justify-end">
+          {/* Right: "Open an account" + "Log in" button */}
+          <div className="w-24 sm:w-44 lg:w-56 flex items-center justify-end gap-1.5 sm:gap-3">
+            <button
+              onClick={() => openWizardFor('checking')}
+              className="hidden sm:inline-flex items-center justify-center bg-[#005A9C] hover:bg-[#004578] text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+            >
+              Open an account
+            </button>
+
             <button
               onClick={() => setShowLoginModal(true)}
-              className="text-[#395ACE] hover:text-[#162B7C] font-bold text-base sm:text-lg transition-colors px-1 py-1 cursor-pointer select-none"
+              className="text-[#395ACE] hover:text-[#162B7C] font-bold text-sm sm:text-base sm:text-lg transition-colors px-1 py-1 cursor-pointer select-none whitespace-nowrap"
             >
               Log in
             </button>
@@ -307,7 +388,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex">
           <div className="w-80 max-w-[85vw] bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-200">
@@ -320,41 +401,79 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-2 text-sm font-semibold text-slate-800">
-                <div className="p-2.5 rounded-lg bg-blue-50 text-[#0c2340] font-bold">Personal Banking</div>
+              <div className="space-y-1.5 text-sm font-semibold text-slate-800">
+                <div className="p-2.5 rounded-lg bg-blue-50 text-[#0c2340] font-bold flex items-center justify-between">
+                  <span>Personal Banking</span>
+                  <span className="text-[10px] uppercase font-bold text-[#005A9C] bg-white px-2 py-0.5 rounded-full border border-blue-100">
+                    Active
+                  </span>
+                </div>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setActiveProduct(solutions[0]); }}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openWizardFor('checking');
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                >
+                  <span>Checking Accounts</span>
+                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
+                    $450 Bonus
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openWizardFor('savings');
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                >
+                  <span>Savings & CDs</span>
+                  <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                    4.50% APY
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openWizardFor('credit');
+                  }}
                   className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg"
                 >
                   Credit Cards
                 </button>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setActiveProduct(solutions[1]); }}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setActiveProduct(solutions[3]);
+                  }}
                   className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg"
                 >
-                  Checking Accounts
+                  Personal Loans
                 </button>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setActiveProduct(solutions[2]); }}
-                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg"
-                >
-                  Savings & CDs
-                </button>
-                <button
-                  onClick={() => { setMobileMenuOpen(false); setActiveProduct(solutions[4]); }}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setActiveProduct(solutions[4]);
+                  }}
                   className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg"
                 >
                   Mortgage & Lending
                 </button>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setActiveProduct(solutions[5]); }}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openWizardFor('business');
+                  }}
                   className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg"
                 >
-                  Wealth Management
+                  Business Banking
                 </button>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setShowLocationsModal(true); }}
-                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg flex items-center gap-2"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowLocationsModal(true);
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-lg flex items-center gap-2 text-slate-600"
                 >
                   <MapPin className="w-4 h-4 text-[#da291c]" /> Find Branch / ATM
                 </button>
@@ -365,13 +484,22 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
+                  openWizardFor('checking');
+                }}
+                className="w-full py-3 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-sm shadow-md transition-colors"
+              >
+                Open an Account
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
                   setShowLoginModal(true);
                 }}
-                className="w-full py-3 rounded-xl bg-[#0c2340] hover:bg-[#133a6f] text-white font-bold text-sm shadow-md transition-colors"
+                className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-colors"
               >
                 Sign In to Account
               </button>
-              <div className="text-center text-xs text-slate-500 font-mono">
+              <div className="text-center text-[11px] text-slate-500">
                 Member FDIC • Equal Housing Lender
               </div>
             </div>
@@ -381,86 +509,208 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
       )}
 
       {/* Hero Section */}
-          <section
-            style={{ background: 'linear-gradient(135deg, #0c2340 0%, #133a6f 100%)' }}
-            className="text-white py-14 sm:py-20 lg:py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
-          >
+      <section
+        style={{ background: 'linear-gradient(135deg, #0c2340 0%, #133a6f 100%)' }}
+        className="text-white py-14 sm:py-20 lg:py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
+      >
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="max-w-2xl space-y-5 text-left">
             <span
               style={{ borderBottom: '3px solid #da291c' }}
               className="text-xs sm:text-sm uppercase tracking-widest font-extrabold pb-1 inline-block text-slate-100"
             >
-              Personal Banking
+              U.S. Bank Smartly® Banking
             </span>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
               Score up to $450 with U.S. Bank Smartly® Checking
             </h1>
             <p className="text-base sm:text-lg text-slate-200 opacity-95 leading-relaxed max-w-xl">
-              Open a new U.S. Bank Smartly® Checking account and complete required activities. Terms and limitations apply.
+              Open a new account in minutes, set up qualifying direct deposits, and experience elite digital banking tools, personalized private wealth options, and 24/7 account protection.
             </p>
-            <div className="pt-2 flex flex-wrap items-center gap-4">
+            <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
+              <button
+                onClick={() => openWizardFor('checking')}
+                className="bg-[#005A9C] hover:bg-[#004578] text-white font-extrabold px-7 py-3.5 rounded-xl text-sm sm:text-base transition-colors shadow-lg flex items-center gap-2 cursor-pointer"
+              >
+                <span>Open an Account</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => setShowBonusModal(true)}
-                className="bg-white hover:bg-slate-100 text-[#0c2340] font-extrabold px-8 py-3.5 rounded-lg text-sm sm:text-base transition-colors shadow-lg cursor-pointer"
+                className="bg-white hover:bg-slate-100 text-[#0c2340] font-extrabold px-6 py-3.5 rounded-xl text-sm sm:text-base transition-colors shadow-md cursor-pointer"
               >
-                Earn your bonus
+                Earn $450 bonus
               </button>
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="bg-transparent hover:bg-white/10 text-white border-2 border-white/60 hover:border-white font-bold px-7 py-3 rounded-lg text-sm sm:text-base transition-colors cursor-pointer"
+                className="bg-transparent hover:bg-white/10 text-white border border-white/60 hover:border-white font-semibold px-5 py-3.5 rounded-xl text-sm transition-colors cursor-pointer"
               >
-                Existing customer sign in
+                Sign In
               </button>
             </div>
           </div>
 
           {/* Hero visual card */}
-          <div className="hidden lg:block shrink-0 w-80 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[#da291c] text-white flex items-center justify-center font-bold text-xs">
-                USB
+          <div className="hidden lg:block shrink-0 w-84 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#da291c] text-white flex items-center justify-center font-bold text-xs">
+                  USB
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white uppercase tracking-wider">
+                    Exclusive Welcome Offer
+                  </div>
+                  <div className="text-[11px] text-blue-200">Checking Relationship</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-white uppercase tracking-wider">Special Promotion</div>
-                <div className="text-[11px] text-blue-200">Checking Relationship</div>
+              <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                Active Offer
+              </span>
+            </div>
+
+            <div className="text-4xl font-black text-white font-mono">$450 BONUS</div>
+            <p className="text-xs text-slate-200 leading-relaxed">
+              Earn $450 when you open an account and complete qualifying direct deposits totaling $3,000 within 90 days.
+            </p>
+
+            <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
+              <div className="flex justify-between text-blue-100">
+                <span>Monthly Maintenance:</span>
+                <span className="font-bold text-white">$0 with qualification</span>
+              </div>
+              <div className="flex justify-between text-blue-100">
+                <span>FDIC Insurance:</span>
+                <span className="font-bold text-white">Up to $250,000</span>
+              </div>
+              <div className="flex justify-between text-blue-100">
+                <span>Zelle® Transfers:</span>
+                <span className="font-bold text-white">Instant & Free</span>
               </div>
             </div>
-            <div className="text-3xl font-black text-white font-mono">$450 BONUS</div>
-            <p className="text-xs text-slate-200 mt-2">
-              Qualify with recurring direct deposits and enroll in modern digital banking tools.
+
+            <button
+              onClick={() => openWizardFor('checking')}
+              className="w-full py-2.5 bg-white text-[#0c2340] hover:bg-slate-100 font-extrabold rounded-xl text-xs transition-colors shadow-sm"
+            >
+              Start Application
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges Strip */}
+      <section className="bg-slate-100 border-y border-slate-200 py-4 px-6 sm:px-10">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-around gap-4 sm:gap-8 text-xs font-semibold text-slate-700">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Member FDIC Protection up to $250,000</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <EqualHousingLenderIcon className="w-4 h-4 text-slate-700" />
+            <span>Equal Housing Lender</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[#005A9C]" />
+            <span>256-Bit TLS Bank-Grade Encryption</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-[#da291c]" />
+            <span>Trusted by Over 12 Million Clients</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Security Section */}
+      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs uppercase tracking-widest font-extrabold text-[#da291c]">
+              Enterprise-Grade Financial Protection
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0c2340] tracking-tight">
+              Banking Built on Uncompromising Security
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              We employ military-grade encryption, continuous biometric safeguards, and round-the-clock fraud specialists to defend your accounts.
             </p>
-            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-blue-200 flex items-center justify-between">
-              <span>Member FDIC</span>
-              <span className="font-bold text-white">Offer Active</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#005A9C] flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">24/7 Fraud Monitoring</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Automated machine learning algorithms screen every debit and wire transaction in real time to intercept suspicious activity.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#005A9C] flex items-center justify-center">
+                <Lock className="w-6 h-6 text-[#005A9C]" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Zero Fraud Liability</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                You are never held responsible for unauthorized transactions when reported promptly. Complete financial peace of mind.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#005A9C] flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-[#da291c]" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Biometric & Card Controls</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Instantly freeze misplaced debit cards, set custom merchant restrictions, and sign in with Face ID or Touch ID.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#005A9C] flex items-center justify-center">
+                <Phone className="w-6 h-6 text-[#0c2340]" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Dedicated Client Concierge</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Access priority phone support and dedicated private bankers at our Nicollet Mall flagship center anytime.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Solutions Grid Section */}
+      {/* Solutions Grid Section (6 Comprehensive Product Cards) */}
       <section style={{ backgroundColor: '#f4f6f9' }} className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16">
         <div className="max-w-6xl mx-auto space-y-8">
-          <div>
-            <div className="relative inline-block mb-3">
-              <h2 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
-                Solutions designed to work for you
-              </h2>
-              <div className="w-10 h-0.5 bg-[#da291c] mt-1.5"></div>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="relative inline-block mb-3">
+                <h2 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
+                  Comprehensive Banking Solutions
+                </h2>
+                <div className="w-10 h-0.5 bg-[#da291c] mt-1.5"></div>
+              </div>
+              <p className="text-2xl sm:text-3xl font-black text-[#0c2340] tracking-tight">
+                Products Tailored to Your Financial Journey
+              </p>
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-[#0c2340] tracking-tight">
-              Banking products tailored to your financial goals
-            </p>
+
+            <button
+              onClick={() => openWizardFor('checking')}
+              className="bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto"
+            >
+              Open an Account Today
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {solutions.map((item, idx) => {
+            {solutions.map((item) => {
               const Icon = item.icon;
               return (
                 <div
-                  key={idx}
-                  onClick={() => setActiveProduct(item)}
-                  className="bg-white p-7 rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between group"
+                  key={item.id}
+                  className="bg-white p-7 rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -472,15 +722,56 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-extrabold text-[#0c2340] group-hover:text-[#1d4ed8] transition-colors">
+                    <h3 className="text-xl font-extrabold text-[#0c2340] group-hover:text-[#005A9C] transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">{item.desc}</p>
+                    <p className="text-xs font-semibold text-slate-500 mt-0.5">{item.tagline}</p>
+                    <p className="text-xs text-slate-600 mt-2.5 leading-relaxed">{item.desc}</p>
+
+                    <ul className="mt-4 space-y-1.5 text-xs text-slate-600">
+                      {item.features.slice(0, 2).map((feat, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1d4ed8]">
-                    <span>View product features & rates</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => {
+                          if (
+                            item.id === 'checking' ||
+                            item.id === 'savings' ||
+                            item.id === 'credit' ||
+                            item.id === 'business'
+                          ) {
+                            openWizardFor(item.id);
+                          } else {
+                            setActiveProduct(item);
+                          }
+                        }}
+                        className="flex-1 py-2 bg-[#005A9C] hover:bg-[#004578] text-white text-xs font-bold rounded-lg transition-colors text-center shadow-xs"
+                      >
+                        Open Account
+                      </button>
+                      <button
+                        onClick={() => setActiveProduct(item)}
+                        className="py-2 px-3 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                      >
+                        Details
+                      </button>
+                    </div>
+
+                    <div
+                      onClick={() => setActiveProduct(item)}
+                      className="flex items-center justify-between text-xs font-bold text-[#005A9C] cursor-pointer hover:underline"
+                    >
+                      <span>View full rates & disclosures</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 </div>
               );
@@ -489,8 +780,57 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         </div>
       </section>
 
-      {/* Sports Partnership & Youth Athletics Community Section */}
+      {/* Benefits Section */}
       <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white border-t border-slate-200">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs uppercase tracking-widest font-extrabold text-[#005A9C]">
+              Why Choose U.S. Bank
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0c2340] tracking-tight">
+              A Smarter, More Rewarding Banking Experience
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              From our mobile check deposit and instant transfers to private wealth advisory, we provide the tools you need to thrive.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#005A9C] flex items-center justify-center font-bold">
+                <Zap className="w-5 h-5 text-[#005A9C]" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Digital Banking Convenience</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Deposit checks with your phone camera, transfer funds via Zelle®, set automated recurring savings, and view statements in real time.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 text-[#da291c] flex items-center justify-center font-bold">
+                <Award className="w-5 h-5 text-[#da291c]" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Relationship Rate Boosts</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Enjoy waived monthly maintenance fees, boosted annual percentage yields on high-yield savings, and exclusive discounts on personal and home loans.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <Building2 className="w-5 h-5 text-emerald-700" />
+              </div>
+              <h3 className="font-bold text-base text-[#0c2340]">Flagship & ATM Network</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Connect in-person at our flagship Nicollet Mall financial center or access cash fee-free at over 40,000 partner ATMs nationwide.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sports Partnership & Youth Athletics Community Section */}
+      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-slate-50 border-t border-slate-200">
         <div className="max-w-6xl mx-auto space-y-8">
           <div>
             <div className="relative inline-block mb-3">
@@ -511,72 +851,72 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         </div>
       </section>
 
-      {/* Promo / Offer Section */}
-      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-slate-50">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          {/* Promo Card */}
-          <div
-            style={{ backgroundColor: '#0c2340' }}
-            className="text-white rounded-3xl p-8 sm:p-10 shadow-xl flex flex-col justify-between"
-          >
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 bg-white/10 px-3 py-1 rounded-full">
-                Digital Security Guarantee
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black mt-4 leading-tight">
-                Manage your money with complete confidence
-              </h2>
-              <p className="text-sm text-slate-300 mt-3 leading-relaxed">
-                Enjoy 24/7 fraud monitoring, zero liability protection, biometrics-secured transfers, and instant account notifications.
-              </p>
-            </div>
-
-            <div className="pt-8">
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="bg-white hover:bg-slate-100 text-[#0c2340] font-extrabold px-6 py-3 rounded-lg text-sm transition-colors shadow-md cursor-pointer"
-              >
-                Sign in to your portal
-              </button>
-            </div>
+      {/* Interactive FAQ Section */}
+      <section className="py-14 sm:py-20 px-6 sm:px-10 lg:px-16 bg-white border-t border-slate-200">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
+              Questions & Answers
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0c2340] tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              Everything you need to know about opening and managing your U.S. Bank account.
+            </p>
           </div>
 
-          {/* Feature Highlights */}
-          <div className="space-y-6 sm:pl-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0c2340] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#0c2340]">256-Bit TLS End-to-End Encryption</h4>
-                <p className="text-xs text-slate-600 mt-1">
-                  Bank-grade security protocols defend every session and protect all transaction records.
-                </p>
-              </div>
-            </div>
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-slate-200 overflow-hidden transition-all bg-white"
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    <span className="font-bold text-sm sm:text-base text-[#0c2340]">
+                      {faq.question}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-[#005A9C]' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-5 sm:px-5 sm:pb-6 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3 animate-in fade-in duration-200">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0c2340] flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5 text-[#0c2340]" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#0c2340]">Member FDIC Protection</h4>
-                <p className="text-xs text-slate-600 mt-1">
-                  Your deposits are insured up to the maximum allowable federal limit of $250,000 per depositor.
-                </p>
-              </div>
+          <div className="p-6 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <h4 className="font-bold text-sm text-[#0c2340]">Still have questions?</h4>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Our client specialists are ready to guide you 24 hours a day, 7 days a week.
+              </p>
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0c2340] flex items-center justify-center shrink-0">
-                <HelpCircle className="w-5 h-5 text-[#0c2340]" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#0c2340]">24/7 Dedicated Client Concierge</h4>
-                <p className="text-xs text-slate-600 mt-1">
-                  Speak directly with banking specialists and relationship managers whenever you need assistance.
-                </p>
-              </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowSupportModal(true)}
+                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs"
+              >
+                Call 1-800-USBANKS
+              </button>
+              <button
+                onClick={() => openWizardFor('checking')}
+                className="px-5 py-2 bg-[#005A9C] hover:bg-[#004578] text-white font-bold text-xs rounded-xl shadow-xs"
+              >
+                Open Account
+              </button>
             </div>
           </div>
         </div>
@@ -584,18 +924,102 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
       {/* Footer */}
       <footer className="mt-auto bg-[#0c2340] text-white py-12 px-6 sm:px-10 lg:px-16 border-t border-[#133a6f] text-xs">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-white/10">
             <UsBankLogo size="lg" variant="light" />
-            <div className="flex flex-wrap items-center gap-6 text-slate-300">
-              <span className="hover:text-white cursor-pointer" onClick={() => setShowSupportModal(true)}>Privacy & Security</span>
-              <span className="hover:text-white cursor-pointer" onClick={() => setShowSupportModal(true)}>Terms of Use</span>
-              <span className="hover:text-white cursor-pointer" onClick={() => setShowSupportModal(true)}>Accessibility</span>
-              <span className="hover:text-white cursor-pointer" onClick={() => setShowLocationsModal(true)}>Routing Transit: 091000022</span>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-slate-300">
+              <span
+                className="hover:text-white cursor-pointer"
+                onClick={() => openWizardFor('checking')}
+              >
+                Open an Account
+              </span>
+              <span
+                className="hover:text-white cursor-pointer"
+                onClick={() => setShowLoginModal(true)}
+              >
+                Sign In
+              </span>
+              <span
+                className="hover:text-white cursor-pointer"
+                onClick={() => setShowLocationsModal(true)}
+              >
+                Locations & ATMs
+              </span>
+              <span
+                className="hover:text-white cursor-pointer"
+                onClick={() => setShowSupportModal(true)}
+              >
+                24/7 Client Service
+              </span>
+              <span className="text-blue-300 font-mono">Routing: 091000022</span>
             </div>
           </div>
 
-          <div className="space-y-2 text-slate-400 text-[11px] leading-relaxed">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-slate-300 text-xs">
+            <div className="space-y-2">
+              <div className="font-bold text-white uppercase tracking-wider text-[11px]">
+                Banking Products
+              </div>
+              <p className="cursor-pointer hover:text-white" onClick={() => openWizardFor('checking')}>
+                Smartly® Checking
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => openWizardFor('savings')}>
+                High-Yield Savings
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => openWizardFor('credit')}>
+                Altitude® Reserve Visa
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => openWizardFor('business')}>
+                Business Banking
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="font-bold text-white uppercase tracking-wider text-[11px]">
+                Lending & Home
+              </div>
+              <p className="cursor-pointer hover:text-white" onClick={() => setActiveProduct(solutions[4])}>
+                Mortgage Purchase
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setActiveProduct(solutions[4])}>
+                Home Refinance
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setActiveProduct(solutions[3])}>
+                Personal Loans
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setActiveProduct(solutions[3])}>
+                Lines of Credit
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="font-bold text-white uppercase tracking-wider text-[11px]">
+                Security & Support
+              </div>
+              <p className="cursor-pointer hover:text-white" onClick={() => setShowSupportModal(true)}>
+                Security Guarantee
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setShowSupportModal(true)}>
+                Fraud Protection
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setShowLocationsModal(true)}>
+                Nicollet Mall Flagship
+              </p>
+              <p className="cursor-pointer hover:text-white" onClick={() => setShowSupportModal(true)}>
+                Customer Assistance
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="font-bold text-white uppercase tracking-wider text-[11px]">
+                Corporate
+              </div>
+              <p className="cursor-pointer hover:text-white">About U.S. Bank</p>
+              <p className="cursor-pointer hover:text-white">Investor Relations</p>
+              <p className="cursor-pointer hover:text-white">Community & Youth Sports</p>
+              <p className="cursor-pointer hover:text-white">Careers</p>
+            </div>
+          </div>
+
+          <div className="space-y-2 text-slate-400 text-[11px] leading-relaxed pt-4 border-t border-white/10">
             <div className="flex items-center gap-2 text-slate-300 font-semibold mb-1">
               <EqualHousingLenderIcon className="w-4 h-4 text-white" />
               <span>Member FDIC | Equal Housing Lender</span>
@@ -609,6 +1033,16 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
           </div>
         </div>
       </footer>
+
+      {/* ACCOUNT CREATION WIZARD (5 STEPS) */}
+      <AccountCreationWizard
+        isOpen={showAccountWizard}
+        onClose={() => setShowAccountWizard(false)}
+        initialAccountType={wizardAccountType}
+        onAccountCreated={(newCust, newAccs) => {
+          onLoginSuccess(newCust, newAccs);
+        }}
+      />
 
       {/* LOGIN MODAL */}
       {showLoginModal && (
@@ -777,7 +1211,16 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                       <ShieldCheck className="w-3.5 h-3.5" /> FDIC Insured
                     </span>
                     <span>•</span>
-                    <span>Encrypted Session</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLoginModal(false);
+                        openWizardFor('checking');
+                      }}
+                      className="text-[#005A9C] font-bold hover:underline"
+                    >
+                      New user? Open an account
+                    </button>
                   </div>
                 </form>
               </>
@@ -854,12 +1297,19 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
               </button>
               <button
                 onClick={() => {
+                  const type =
+                    activeProduct.id === 'checking' ||
+                    activeProduct.id === 'savings' ||
+                    activeProduct.id === 'credit' ||
+                    activeProduct.id === 'business'
+                      ? activeProduct.id
+                      : 'checking';
                   setActiveProduct(null);
-                  setShowLoginModal(true);
+                  openWizardFor(type);
                 }}
-                className="px-5 py-2.5 bg-[#0c2340] hover:bg-[#133a6f] text-white font-bold rounded-xl shadow-xs"
+                className="px-5 py-2.5 bg-[#005A9C] hover:bg-[#004578] text-white font-bold rounded-xl shadow-xs"
               >
-                Apply Online & Sign In
+                Apply Online & Open Account
               </button>
             </div>
           </div>
@@ -934,7 +1384,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
                 <Phone className="w-4 h-4 text-[#0c2340] shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-slate-900">General Customer Inquiries</div>
-                  <div className="font-mono text-xs text-[#1d4ed8] font-bold">1-800-USBANKS (1-800-872-2657)</div>
+                  <div className="font-mono text-xs text-[#005A9C] font-bold">1-800-USBANKS (1-800-872-2657)</div>
                   <div className="text-[10px] text-slate-500">24 hours a day, 7 days a week</div>
                 </div>
               </div>
@@ -974,15 +1424,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
         <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl p-6 sm:p-8 border border-slate-200 animate-in zoom-in-95 duration-200 space-y-4 text-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center font-extrabold text-xl text-[#0c2340]">
-                <span
-                  style={{ backgroundColor: '#da291c', color: 'white', padding: '2px 6px', borderRadius: '4px', marginRight: '2px' }}
-                  className="text-xs font-black"
-                >
-                  us
-                </span>
-                <span>bank</span>
-              </div>
+              <UsBankLogo size="sm" variant="dark" />
               <button
                 onClick={() => setShowBonusModal(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"
@@ -1023,11 +1465,11 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
               <button
                 onClick={() => {
                   setShowBonusModal(false);
-                  setShowLoginModal(true);
+                  openWizardFor('checking');
                 }}
-                className="px-5 py-2.5 rounded-xl bg-[#0c2340] hover:bg-[#133a6f] text-white font-bold"
+                className="px-5 py-2.5 rounded-xl bg-[#005A9C] hover:bg-[#004578] text-white font-bold"
               >
-                Sign In to Apply
+                Open Checking & Claim Bonus
               </button>
             </div>
           </div>
