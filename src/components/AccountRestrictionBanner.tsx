@@ -193,10 +193,10 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
               {onSelectPendingTx && (
                 <button
                   onClick={onSelectPendingTx}
-                  className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-900 hover:bg-amber-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                  className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                 >
-                  <span>Review Hospital Bill</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-amber-600" />
+                  <span>View Hospital Bill (Successful)</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-emerald-600" />
                 </button>
               )}
             </div>
@@ -275,19 +275,19 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
                 </div>
               </div>
 
-              {/* Pending Transaction Information */}
+              {/* Settled Transaction Information */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase text-slate-500">Related Activity</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
-                    Pending Review
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    Successful
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-bold text-slate-900">Hospital Bill Payment</div>
                     <div className="text-[11px] text-slate-500">
-                      Unspecified Healthcare Provider (Pending provider confirmation)
+                      Unspecified Healthcare Provider (Successfully Settled & Posted)
                     </div>
                   </div>
                   <div className="text-right font-mono font-bold text-slate-900">-$300,000.00</div>

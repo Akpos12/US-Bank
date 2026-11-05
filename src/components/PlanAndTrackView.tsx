@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { Customer, Account, Transaction } from '../types/banking.ts';
 import { api } from '../services/api.ts';
+import confetti from 'canvas-confetti';
 
 interface PlanAndTrackViewProps {
   customer?: Customer | null;
@@ -123,7 +124,7 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
     label: 'Hospital Bill Payment',
     provider: 'Unspecified Healthcare Provider',
     amount: 300000.0,
-    status: 'Pending Review',
+    status: 'Successful & Settled',
   });
 
   // Touch & Swipe gesture handling for 3D Carousel
@@ -147,7 +148,7 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
               label: hosp.label,
               provider: hosp.provider,
               amount: Math.abs(hosp.amount),
-              status: hosp.status,
+              status: hosp.status === 'Pending Review' || hosp.status === 'pending' ? 'Successful & Settled' : hosp.status,
             });
           }
         }
@@ -665,26 +666,56 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
             </div>
           </div>
 
-          {/* Pending Hospital Bill & Account Status Notification Banner */}
-          <div className="bg-amber-50/90 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-xs text-amber-900">
+          {/* Hospital Bill & Account Status Notification Banner */}
+          <div
+            className={`px-4 py-2 flex items-center justify-between text-xs border-b ${
+              pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900'
+                : 'bg-amber-50/90 border-amber-200 text-amber-900'
+            }`}
+          >
             <div className="flex items-center gap-2 min-w-0">
-              <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+              {pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled') ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+              )}
               <div className="truncate">
-                <span className="font-extrabold text-amber-950">Pending Ledger: </span>
-                <span className="font-medium text-amber-900">
+                <span
+                  className={`font-extrabold ${
+                    pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                      ? 'text-emerald-950'
+                      : 'text-amber-950'
+                  }`}
+                >
+                  {pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                    ? 'Settled Ledger: '
+                    : 'Pending Ledger: '}
+                </span>
+                <span
+                  className={`font-medium ${
+                    pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                      ? 'text-emerald-900'
+                      : 'text-amber-900'
+                  }`}
+                >
                   {pendingHospitalBill.label} (-$
                   {pendingHospitalBill.amount.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                   })}
-                  ) • {pendingHospitalBill.provider}
+                  ) • {pendingHospitalBill.provider} ({pendingHospitalBill.status})
                 </span>
               </div>
             </div>
             <button
               onClick={() => setShowPendingLedgerModal(true)}
-              className="text-[11px] font-bold text-amber-900 underline hover:text-amber-950 shrink-0 ml-2"
+              className={`text-[11px] font-bold underline shrink-0 ml-2 ${
+                pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                  ? 'text-emerald-900 hover:text-emerald-950'
+                  : 'text-amber-900 hover:text-amber-950'
+              }`}
             >
-              View hold details
+              View ledger details
             </button>
           </div>
         </header>
@@ -1703,9 +1734,21 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
             </div>
 
             <div className="p-4 sm:p-5 space-y-4 text-xs text-slate-700">
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+              <div
+                className={`p-3.5 rounded-xl border space-y-2 ${
+                  pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                    ? 'bg-emerald-50 border-emerald-200'
+                    : 'bg-amber-50 border-amber-200'
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-amber-950 text-sm">
+                  <span
+                    className={`font-extrabold text-sm ${
+                      pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                        ? 'text-emerald-950'
+                        : 'text-amber-950'
+                    }`}
+                  >
                     {pendingHospitalBill.label}
                   </span>
                   <span className="font-black text-rose-700 text-sm">
@@ -1715,14 +1758,28 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
                     })}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-amber-900 pt-1 border-t border-amber-200/60">
+                <div
+                  className={`grid grid-cols-2 gap-2 text-[11px] pt-1 border-t ${
+                    pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                      ? 'text-emerald-900 border-emerald-200/60'
+                      : 'text-amber-900 border-amber-200/60'
+                  }`}
+                >
                   <div>
                     <span className="text-slate-500 block">Healthcare Provider:</span>
                     <strong className="text-slate-900">{pendingHospitalBill.provider}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Ledger Status:</span>
-                    <strong className="text-amber-800">{pendingHospitalBill.status}</strong>
+                    <strong
+                      className={
+                        pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                          ? 'text-emerald-700 font-extrabold'
+                          : 'text-amber-800'
+                      }
+                    >
+                      {pendingHospitalBill.status}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Transaction ID:</span>
@@ -1730,7 +1787,11 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
                   </div>
                   <div>
                     <span className="text-slate-500 block">Posting Effect:</span>
-                    <span>Deducted from Available Balance only</span>
+                    <span>
+                      {pendingHospitalBill.status.includes('Successful') || pendingHospitalBill.status.includes('Settled')
+                        ? 'Successfully Posted & Settled'
+                        : 'Deducted from Available Balance only'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1739,21 +1800,44 @@ export const PlanAndTrackView: React.FC<PlanAndTrackViewProps> = ({
                 <div className="font-bold text-slate-900">Accounting & Cash Flow Rules:</div>
                 <ul className="list-disc list-inside space-y-1 text-slate-600">
                   <li>
-                    <strong>Pending Review Segregation:</strong> This $300,000.00 charge is pending
-                    provider verification and does not distort monthly category spending rings or
-                    cash flow metrics until officially settled.
+                    <strong>Settled & Cleared:</strong> This $300,000.00 hospital bill has been verified, settled, and successfully cleared on the ledger.
                   </li>
                   <li>
-                    <strong>Account Status Impact:</strong> Outgoing transfers are restricted while
-                    identity and provider settlement confirmation is completed.
+                    <strong>Ledger Balance:</strong> Reconciled to account records and completed without pending restrictions.
                   </li>
                 </ul>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex items-center justify-between gap-3">
+                {!pendingHospitalBill.status.includes('Successful') && !pendingHospitalBill.status.includes('Settled') ? (
+                  <button
+                    onClick={() => {
+                      setPendingHospitalBill((prev) => ({
+                        ...prev,
+                        status: 'Successful & Settled',
+                      }));
+                      try {
+                        confetti({
+                          particleCount: 70,
+                          spread: 70,
+                          origin: { y: 0.6 },
+                        });
+                      } catch {}
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Mark Bill as Successful & Clear</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Bill successfully cleared & posted to ledger</span>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowPendingLedgerModal(false)}
-                  className="px-4 py-1.5 bg-[#0C1B33] text-white font-bold text-xs rounded-xl"
+                  className="px-4 py-2 bg-[#0C1B33] hover:bg-[#133a6f] text-white font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Understood
                 </button>

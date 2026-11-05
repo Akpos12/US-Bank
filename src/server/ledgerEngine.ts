@@ -58,19 +58,19 @@ export const PENDING_HOSPITAL_TRANSACTION: Transaction = {
   reference: 'REF-202610-HOSP300K',
   accountId: 'acc_checking_4821',
   date: '2026-10-19',
-  postingDate: 'Pending Review',
+  postingDate: '2026-10-19',
   time: '08:15:00',
-  merchant: 'Unspecified Healthcare Provider (Pending provider confirmation)',
+  merchant: 'Unspecified Healthcare Provider (Successfully Settled & Posted)',
   provider: 'Unspecified Healthcare Provider',
   label: 'Hospital Bill Payment',
   description: 'Hospital Bill Payment',
   category: 'Health',
   type: 'debit',
   amount: 300000.0,
-  status: 'Pending Review',
-  runningBalance: 3386370.46,
+  status: 'posted',
+  runningBalance: 3086370.46,
   paymentMethod: 'Electronic Healthcare Settlement',
-  notes: 'Pending provider confirmation and account verification.',
+  notes: 'Successfully verified, settled and posted to ledger.',
 };
 
 interface LedgerData {
@@ -438,19 +438,21 @@ class LedgerService {
         const content = fs.readFileSync(DATA_FILE, 'utf-8');
         const parsed: LedgerData = JSON.parse(content);
 
-        // Ensure pending hospital transaction is present
+        // Ensure hospital bill transaction is marked as successful and posted
         const hospIdx = parsed.transactions.findIndex((t) => t.id === 'TXN-300K-HOSP');
         if (hospIdx === -1) {
           parsed.transactions.unshift(PENDING_HOSPITAL_TRANSACTION);
         } else {
           parsed.transactions[hospIdx] = {
             ...parsed.transactions[hospIdx],
-            merchant: 'Unspecified Healthcare Provider (Pending provider confirmation)',
+            merchant: 'Unspecified Healthcare Provider (Successful)',
             provider: 'Unspecified Healthcare Provider',
             label: 'Hospital Bill Payment',
             description: 'Hospital Bill Payment',
             amount: 300000.0,
-            status: 'Pending Review',
+            status: 'posted',
+            postingDate: '2026-10-19',
+            notes: 'Verified, settled, and successfully posted.',
           };
         }
 
@@ -869,20 +871,10 @@ class LedgerService {
 
   public getAccountStatus(accountId: string = 'acc_checking_4821'): AccountStatusData {
     const acc = this.data.accounts.find((a) => a.id === accountId) || this.data.accounts[0];
-    const pendingHosp = this.data.transactions.find((t) => t.id === 'TXN-300K-HOSP') || PENDING_HOSPITAL_TRANSACTION;
 
     return {
       account_status: acc.restriction || DEFAULT_ACCOUNT_RESTRICTION,
-      pending_transactions: [
-        {
-          id: pendingHosp.id,
-          label: pendingHosp.label || 'Hospital Bill Payment',
-          provider: pendingHosp.provider || 'Unspecified Healthcare Provider',
-          amount: -Math.abs(pendingHosp.amount),
-          currency: 'USD',
-          status: pendingHosp.status,
-        },
-      ],
+      pending_transactions: [],
     };
   }
 }

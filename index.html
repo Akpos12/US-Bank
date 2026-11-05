@@ -3,6 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // AI Studio environment constraint: HMR is disabled; ignore WebSocket connection errors
+      (function() {
+        try {
+          var OriginalWebSocket = window.WebSocket;
+          if (OriginalWebSocket) {
+            var ViteSafeWebSocket = function(url, protocols) {
+              var isViteHmr = false;
+              if (typeof protocols === 'string' && (protocols === 'vite-hmr' || protocols === 'vite-ping')) {
+                isViteHmr = true;
+              } else if (Array.isArray(protocols) && (protocols.indexOf('vite-hmr') !== -1 || protocols.indexOf('vite-ping') !== -1)) {
+                isViteHmr = true;
+              } else if (typeof url === 'string' && (url.indexOf('vite-hmr') !== -1 || url.indexOf('token=') !== -1)) {
+                isViteHmr = true;
+              }
+              if (isViteHmr) {
+                var target = new EventTarget();
+                target.readyState = 1; // WebSocket.OPEN
+                target.send = function() {};
+                target.close = function() {};
+                target.url = url;
+                target.protocol = typeof protocols === 'string' ? protocols : 'vite-hmr';
+                setTimeout(function() {
+                  try {
+                    target.dispatchEvent(new Event('open'));
+                  } catch (e) {}
+                }, 5);
+                return target;
+              }
+              return new OriginalWebSocket(url, protocols);
+            };
+            ViteSafeWebSocket.prototype = OriginalWebSocket.prototype;
+            ViteSafeWebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+            ViteSafeWebSocket.OPEN = OriginalWebSocket.OPEN;
+            ViteSafeWebSocket.CLOSING = OriginalWebSocket.CLOSING;
+            ViteSafeWebSocket.CLOSED = OriginalWebSocket.CLOSED;
+            window.WebSocket = ViteSafeWebSocket;
+          }
+        } catch (e) {}
+
+        window.addEventListener('unhandledrejection', function(e) {
+          var msg = (e && e.reason && (e.reason.message || String(e.reason))) || '';
+          var stack = (e && e.reason && e.reason.stack) || '';
+          if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('vite') !== -1 || stack.indexOf('@vite/client') !== -1) {
+            e.preventDefault();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('error', function(e) {
+          var msg = (e && (e.message || '')) || '';
+          var filename = (e && e.filename) || '';
+          if (msg.indexOf('WebSocket') !== -1 || filename.indexOf('@vite/client') !== -1) {
+            e.preventDefault();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
     <title>U.S. Bank - Personal Banking, Checking, Savings & Loans</title>
     <meta name="description" content="U.S. Bank official digital banking portal. Access checking, savings, loans, credit cards, real-time transfers, and account management." />
     <meta property="og:title" content="U.S. Bank - Personal Banking, Checking, Savings & Loans" />

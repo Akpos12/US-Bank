@@ -101,9 +101,9 @@ export const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                   <Clock className="w-3.5 h-3.5" /> Pending Settlement
                 </span>
-              ) : transaction.status === 'posted' ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Completed & Posted
+              ) : transaction.status === 'posted' || (transaction.status as string) === 'successful' ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Successful & Posted
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
@@ -174,14 +174,14 @@ export const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = (
               </div>
             )}
 
-            {transaction.status === 'Pending Review' && (
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1.5">
-                <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                  <ShieldCheck className="w-4 h-4 text-amber-700" />
-                  <span>Pending Provider Confirmation</span>
+            {transaction.id === 'TXN-300K-HOSP' && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Hospital Bill Settled & Verified</span>
                 </div>
-                <p className="text-[11px] text-amber-800 leading-relaxed">
-                  Provider is currently recorded as <strong>Unspecified Healthcare Provider</strong> pending billing confirmation. Outgoing bank transfers for this account are temporarily unavailable due to additional account verification required.
+                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  Payment to <strong>Unspecified Healthcare Provider</strong> has been successfully cleared, settled, and authoritative ledger balance updated.
                 </p>
               </div>
             )}

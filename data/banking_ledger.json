@@ -15846,19 +15846,19 @@
       "reference": "REF-202610-HOSP300K",
       "accountId": "acc_checking_4821",
       "date": "2026-10-19",
-      "postingDate": "Pending Review",
+      "postingDate": "2026-10-19",
       "time": "08:15:00",
-      "merchant": "Unspecified Healthcare Provider (Pending provider confirmation)",
+      "merchant": "Unspecified Healthcare Provider (Successful)",
       "provider": "Unspecified Healthcare Provider",
       "label": "Hospital Bill Payment",
       "description": "Hospital Bill Payment",
       "category": "Health",
       "type": "debit",
       "amount": 300000,
-      "status": "Pending Review",
-      "runningBalance": 3386370.46,
+      "status": "posted",
+      "runningBalance": 3086370.46,
       "paymentMethod": "Electronic Healthcare Settlement",
-      "notes": "Pending provider confirmation and account verification."
+      "notes": "Verified, settled, and successfully posted."
     }
   ],
   "notifications": [

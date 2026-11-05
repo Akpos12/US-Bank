@@ -526,8 +526,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="divide-y divide-slate-100">
             {recentTransactions.map((tx) => {
               const isCredit = tx.type === 'credit';
-              const isPending = tx.status === 'pending';
-              const isPendingReview = tx.status === 'Pending Review';
+              const isHospitalSettled = tx.id === 'TXN-300K-HOSP';
+              const isPending = !isHospitalSettled && tx.status === 'pending';
+              const isPendingReview = !isHospitalSettled && tx.status === 'Pending Review';
 
               return (
                 <div
@@ -565,6 +566,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         ) : isPending ? (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             Pending
+                          </span>
+                        ) : isHospitalSettled ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Successful
                           </span>
                         ) : null}
                       </div>

@@ -461,8 +461,9 @@ export const TransactionsPage: React.FC = () => {
                     {/* Transaction Rows within this date section */}
                     {txs.map((tx) => {
                       const isCredit = tx.type === 'credit';
-                      const isPending = tx.status === 'pending';
-                      const isPendingReview = tx.status === 'Pending Review';
+                      const isHospitalSettled = tx.id === 'TXN-300K-HOSP';
+                      const isPending = !isHospitalSettled && tx.status === 'pending';
+                      const isPendingReview = !isHospitalSettled && tx.status === 'Pending Review';
 
                       return (
                         <tr
@@ -515,9 +516,9 @@ export const TransactionsPage: React.FC = () => {
                                 Pending
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                Posted
+                                Successful
                               </span>
                             )}
                           </td>

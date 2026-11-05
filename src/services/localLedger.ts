@@ -163,19 +163,19 @@ function getInitialState(): LocalState {
       reference: 'REF-202610-HOSP300K',
       accountId: 'acc_checking_4821',
       date: '2026-10-19',
-      postingDate: 'Pending Review',
+      postingDate: '2026-10-19',
       time: '08:15:00',
-      merchant: 'Unspecified Healthcare Provider (Pending provider confirmation)',
+      merchant: 'Unspecified Healthcare Provider (Successfully Settled & Posted)',
       provider: 'Unspecified Healthcare Provider',
       label: 'Hospital Bill Payment',
       description: 'Hospital Bill Payment',
       category: 'Health',
       type: 'debit',
       amount: 300000.0,
-      status: 'Pending Review',
-      runningBalance: 3386370.46,
+      status: 'posted',
+      runningBalance: 3086370.46,
       paymentMethod: 'Electronic Healthcare Settlement',
-      notes: 'Pending provider confirmation and account verification.',
+      notes: 'Successfully verified, settled and posted to ledger.',
     },
     {
       id: 'txn_2026_10_1042',
@@ -480,16 +480,7 @@ class LocalLedgerService {
       const acc = this.state.accounts.find((a) => a.id === accId) || this.state.accounts[0];
       return {
         account_status: acc.restriction || DEFAULT_ACCOUNT_RESTRICTION,
-        pending_transactions: [
-          {
-            id: 'TXN-300K-HOSP',
-            label: 'Hospital Bill Payment',
-            provider: 'Unspecified Healthcare Provider',
-            amount: -300000.0,
-            currency: 'USD',
-            status: 'Pending Review',
-          },
-        ],
+        pending_transactions: [],
       };
     }
 
@@ -502,16 +493,7 @@ class LocalLedgerService {
     if (path === '/api/account/status' || path === '/api/account-restriction') {
       return {
         account_status: DEFAULT_ACCOUNT_RESTRICTION,
-        pending_transactions: [
-          {
-            id: 'TXN-300K-HOSP',
-            label: 'Hospital Bill Payment',
-            provider: 'Unspecified Healthcare Provider',
-            amount: -300000.0,
-            currency: 'USD',
-            status: 'Pending Review',
-          },
-        ],
+        pending_transactions: [],
       };
     }
 

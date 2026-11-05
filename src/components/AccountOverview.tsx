@@ -536,7 +536,8 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
         <div className="divide-y divide-slate-100">
           {recentTxs.map((tx) => {
             const isCredit = tx.type === 'credit';
-            const isPendingReview = tx.status === 'Pending Review';
+            const isHospitalSettled = tx.id === 'TXN-300K-HOSP';
+            const isPendingReview = !isHospitalSettled && tx.status === 'Pending Review';
 
             return (
               <div
@@ -559,11 +560,15 @@ export const AccountOverview: React.FC<AccountOverviewProps> = ({
                   <div>
                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <span>{tx.label || tx.description || tx.merchant}</span>
-                      {isPendingReview && (
+                      {isPendingReview ? (
                         <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                           Pending Review
                         </span>
-                      )}
+                      ) : isHospitalSettled ? (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          Successful
+                        </span>
+                      ) : null}
                     </div>
                     <div className="text-[11px] text-slate-500 font-medium">
                       {tx.provider || tx.merchant} • {tx.date}
