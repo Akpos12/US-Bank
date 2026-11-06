@@ -244,7 +244,7 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
     if (activeTab === 'registered') {
       if (!matchedRecipient) {
         setError(
-          'Invalid Account or Routing Number. Target recipient must match one of the registered accounts: 4892018437 (Chase Bank • Elaine Jefferson), 8104928371 (Wells Fargo Bank • Children\'s Hospital of Philadelphia), or 3751920482 (Bank of America • Stephan A. Grupp).'
+          'Invalid or unrecognized recipient account. Please verify the account number and routing number and try again.'
         );
         return;
       }
@@ -586,16 +586,6 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
                         <span className="text-slate-500 text-[10px] block font-sans">Routing Number</span>
                         <span className="font-mono font-bold text-xs text-slate-800">{matchedRecipient.routingNumber}</span>
                       </div>
-                    </div>
-                  </div>
-                ) : recipientInput.trim().length > 0 || routingInput.trim().length > 0 ? (
-                  <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs flex items-center gap-2.5 text-rose-800">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <div>
-                      <span className="font-bold">Unrecognized Beneficiary Details: </span>
-                      <span>
-                        Please enter one of the registered beneficiary accounts: 4892018437 (Chase Bank • Elaine Jefferson), 8104928371 (Wells Fargo Bank • Children's Hospital of Philadelphia), or 3751920482 (Bank of America • Stephan A. Grupp).
-                      </span>
                     </div>
                   </div>
                 ) : null}
