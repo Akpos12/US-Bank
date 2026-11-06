@@ -47,11 +47,14 @@ export interface Transaction {
   postingDate: string; // YYYY-MM-DD
   time: string;
   merchant: string;
+  sender?: string;
+  recipient?: string;
   description: string;
   category: TransactionCategory;
   type: TransactionType;
+  fundType?: 'restricted_existing' | 'newly_received' | 'outgoing_transfer';
   amount: number;
-  status: TransactionStatus;
+  status: TransactionStatus | 'successful';
   runningBalance: number;
   paymentMethod: string;
   notes?: string;
@@ -68,10 +71,12 @@ export interface Account {
   routingNumber: string;
   routingNumberMasked: string;
   type: 'checking' | 'savings' | 'credit';
-  status: 'Active' | 'Dormant' | 'Frozen' | 'Transfers Temporarily Restricted';
+  status: 'Active' | 'Dormant' | 'Frozen' | 'Transfers Temporarily Restricted' | 'Restricted balance mode';
   currency: 'USD';
   availableBalance: number;
   ledgerBalance: number;
+  restrictedBalance?: number;
+  availableReceivedBalance?: number;
   openingBalance: number;
   openedDate: string;
   lastUpdated: string;
@@ -151,14 +156,30 @@ export interface Payee {
   lastUsedDate?: string;
 }
 
+export interface RegisteredRecipient {
+  accountNumber: string;
+  routingNumber: string;
+  bankName: string;
+  code: string;
+  name: string;
+  accountType: 'Individual' | 'Institutional / Donation';
+  description?: string;
+}
+
 export interface TransferRequest {
   fromAccountId: string;
-  toType: 'internal' | 'payee';
+  toType: 'internal' | 'payee' | 'registered_account';
   toAccountId?: string;
   toPayeeId?: string;
+  recipientAccountNumber?: string;
+  recipientRoutingNumber?: string;
+  recipientBankName?: string;
+  recipientName?: string;
+  recipientType?: 'Individual' | 'Institutional / Donation';
   amount: number;
   description: string;
   category: TransactionCategory;
   transferDate: string; // immediate or date
   speed: 'standard' | 'instant';
+  pin?: string;
 }

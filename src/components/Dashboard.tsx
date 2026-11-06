@@ -198,26 +198,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {primaryChecking?.accountNumberMasked || '•••• 4821'}
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                  Temporary Security Hold
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#005A9C] border border-blue-200">
+                  <Lock className="w-3 h-3 text-[#005A9C]" />
+                  Restricted balance mode
                 </span>
               </div>
 
               {/* Balances Display */}
               <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-slate-500">Available Balance:</span>
-                  <span className="text-base font-bold font-mono tabular-nums text-slate-900">
-                    {hideBalance ? '••••••••' : '$0.00'}
+                  <div>
+                    <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available to Transfer:
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">Newly Received Funds</span>
+                  </div>
+                  <span className="text-base font-bold font-mono tabular-nums text-emerald-700">
+                    {hideBalance
+                      ? '••••••••'
+                      : `$${(primaryChecking?.availableBalance ?? 100000.0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-slate-500">Current Ledger Balance:</span>
-                  <span className="text-lg font-extrabold font-mono tabular-nums text-[#0C2340]">
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-slate-400" /> Restricted Existing Balance:
+                  </span>
+                  <span className="text-xs font-semibold font-mono tabular-nums text-slate-600">
                     {hideBalance
                       ? '••••••••'
-                      : `$${(primaryChecking?.ledgerBalance || 3386370.46).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                      : `$${(primaryChecking?.restrictedBalance || 3086370.46).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between pt-1 border-t border-slate-100">
+                  <span className="text-xs font-medium text-slate-500">Total Ledger Balance:</span>
+                  <span className="text-base font-extrabold font-mono tabular-nums text-[#0C2340]">
+                    {hideBalance
+                      ? '••••••••'
+                      : `$${(primaryChecking?.ledgerBalance || 3186370.46).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </span>
                 </div>
               </div>
@@ -566,6 +583,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         ) : isPending ? (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             Pending
+                          </span>
+                        ) : tx.id === 'TXN-100K-DEP-ELAINE' || tx.fundType === 'newly_received' ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Successful • Available
+                          </span>
+                        ) : tx.fundType === 'outgoing_transfer' ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-[#005A9C] border border-blue-200">
+                            Successful • PIN Verified
                           </span>
                         ) : isHospitalSettled ? (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">

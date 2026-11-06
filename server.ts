@@ -20,12 +20,14 @@ const activeSessions = new Set<string>();
 
 // Middleware for token validation
 function authMiddleware(req: Request, res: Response, next: () => void) {
-  // Allow public auth and health endpoints
+  // Allow public auth, health, and v1 bank inquiry endpoints
   if (
     req.path.startsWith('/auth/login') ||
     req.path === '/health' ||
+    req.path.startsWith('/v1/bank/') ||
     req.originalUrl.startsWith('/api/auth/login') ||
-    req.originalUrl === '/api/health'
+    req.originalUrl === '/api/health' ||
+    req.originalUrl.startsWith('/api/v1/bank/')
   ) {
     return next();
   }
@@ -264,7 +266,7 @@ app.get('/api/transactions/:id', (req: Request, res: Response) => {
   return res.json(tx);
 });
 
-// --- Transfers Endpoints ---
+// --- Transfers & Deposits Endpoints ---
 app.post('/api/transfers', (req: Request, res: Response) => {
   try {
     const result = ledgerService.executeTransfer(req.body);
@@ -272,6 +274,69 @@ app.post('/api/transfers', (req: Request, res: Response) => {
   } catch (err: any) {
     return res.status(400).json({ error: err.message || 'Transfer processing failed' });
   }
+});
+
+// --- V1 Bank Lookup & Transfer Endpoints ---
+app.post('/api/v1/bank/lookup', (req: Request, res: Response) => {
+  const entered_account_number = req.body.account_number || req.body.accountNumber;
+  if (!entered_account_number) {
+    return res.status(400).json({ status: 'error', message: 'Account number is required.' });
+  }
+
+  const record = ledgerService.lookupAccountV1(String(entered_account_number));
+  if (record) {
+    return res.status(200).json({
+      status: 'success',
+      bank_name: record.bank_name,
+      routing_number: record.routing_number,
+      account_name: record.account_name,
+    });
+  } else {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Account number not found or invalid.',
+    });
+  }
+});
+
+app.post('/api/v1/bank/transfer', (req: Request, res: Response) => {
+  try {
+    const result = ledgerService.executeTransferV1(req.body);
+    return res.status(200).json({
+      status: 'success',
+      message: result.message,
+      new_balance: result.new_balance,
+      transaction: result.transaction,
+    });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Transfer execution failed.' });
+  }
+});
+
+app.post('/api/deposits', (req: Request, res: Response) => {
+  try {
+    const result = ledgerService.receiveDeposit(req.body);
+    return res.status(201).json(result);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Deposit processing failed' });
+  }
+});
+
+app.get('/api/recipients/lookup', (req: Request, res: Response) => {
+  const accountQuery = (req.query.accountNumber as string) || (req.query.q as string) || '';
+  const routingQuery = (req.query.routingNumber as string) || '';
+  const recipient = ledgerService.lookupRecipient(accountQuery, routingQuery);
+  if (!recipient) {
+    return res.status(404).json({
+      error: 'Invalid Account Number',
+      message: 'Recipient not found. Valid registered accounts: 4892018437 (Chase Bank • Elaine Jefferson), 8104928371 (Wells Fargo Bank • Children\'s Hospital of Philadelphia), or 3751920482 (Bank of America • Stephan A. Grupp).'
+    });
+  }
+  return res.json({ success: true, recipient });
+});
+
+app.get('/api/recipients', (_req: Request, res: Response) => {
+  return res.json(ledgerService.getRegisteredRecipients());
 });
 
 app.get('/api/payees', (_req: Request, res: Response) => {

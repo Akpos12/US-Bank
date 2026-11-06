@@ -13,19 +13,24 @@ import {
 
 const DEFAULT_ACCOUNT_RESTRICTION: AccountRestriction = {
   restriction_active: true,
-  status_label: 'Account Locked',
-  reason: 'Additional branch verification required to lift security hold.',
+  status_label: 'Restricted balance mode',
+  reason: 'Existing balance locked under account security protocol. Newly received deposits are available for outgoing transfers.',
   affected_services: [
-    'Outgoing bank transfers',
-    'Incoming bank transfers',
-    'Debit card purchases',
-    'External withdrawals',
+    'Transfers from restricted existing balance',
+    'Spending locked existing funds',
+    'ATM cash withdrawals from restricted balance',
   ],
-  unaffected_services: ['Historical statement viewing', 'Account balance review', 'Document access'],
+  unaffected_services: [
+    'Incoming deposits (unrestricted)',
+    'Transfers from newly received available balance',
+    'PIN-authorized external transfers',
+    'Historical statement viewing',
+    'Account balance review',
+  ],
   notification_message:
-    'Transfers and outgoing debits are temporarily restricted pending in-person branch verification.',
+    'Your existing balance ($3,086,370.46) remains held under Restricted Balance Mode. Newly received deposits are credited to your Available Balance.',
   resolution_instructions:
-    'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
+    'To unlock your restricted existing funds, please visit your local U.S. Bank branch with valid government identification.',
 };
 
 const SAVINGS_ACCOUNT_RESTRICTION: AccountRestriction = {
@@ -107,13 +112,15 @@ function getInitialState(): LocalState {
       routingNumber: '091000022',
       routingNumberMasked: '•••• 0022',
       type: 'checking',
-      status: 'Frozen',
+      status: 'Restricted balance mode',
       currency: 'USD',
-      availableBalance: 0.0,
-      ledgerBalance: 3386370.46,
+      availableBalance: 100000.0,
+      availableReceivedBalance: 100000.0,
+      restrictedBalance: 3086370.46,
+      ledgerBalance: 3186370.46,
       openingBalance: 42500.0,
       openedDate: '2021-01-05',
-      lastUpdated: '2026-10-19T08:15:00.000Z',
+      lastUpdated: '2026-10-19T10:45:00.000Z',
       interestRate: 0.45,
       isPrimary: true,
       restriction: DEFAULT_ACCOUNT_RESTRICTION,
@@ -158,6 +165,28 @@ function getInitialState(): LocalState {
   ];
 
   const transactions: Transaction[] = [
+    {
+      id: 'TXN-100K-DEP-ELAINE',
+      reference: 'DEP-202610-EJ100K',
+      accountId: 'acc_checking_4821',
+      date: '2026-10-19',
+      postingDate: '2026-10-19',
+      time: '10:45:00',
+      merchant: 'Deposit from Elaine Jefferson',
+      sender: 'Elaine Jefferson',
+      recipient: 'Justin Jefferson',
+      provider: 'Direct Wire Settlement',
+      label: 'Incoming Deposit',
+      description: 'Incoming Deposit - Elaine Jefferson',
+      category: 'Income',
+      type: 'credit',
+      fundType: 'newly_received',
+      amount: 100000.0,
+      status: 'posted',
+      runningBalance: 3186370.46,
+      paymentMethod: 'Incoming Federal Wire Transfer',
+      notes: 'Direct incoming deposit from Elaine Jefferson to Justin Jefferson. Cleared and added to Available Balance.',
+    },
     {
       id: 'TXN-300K-HOSP',
       reference: 'REF-202610-HOSP300K',
@@ -362,11 +391,14 @@ class LocalLedgerService {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Ensure checking account is frozen with 0 available balance
+        // Ensure checking account is in Restricted Balance Mode
         const chk = parsed.accounts?.find((a: Account) => a.id === 'acc_checking_4821');
         if (chk) {
-          chk.status = 'Frozen';
-          chk.availableBalance = 0.0;
+          chk.status = 'Restricted balance mode';
+          chk.restrictedBalance = 3086370.46;
+          chk.availableReceivedBalance = 100000.0;
+          chk.availableBalance = 100000.0;
+          chk.ledgerBalance = 3186370.46;
           chk.restriction = DEFAULT_ACCOUNT_RESTRICTION;
         }
         const sav = parsed.accounts?.find((a: Account) => a.id === 'acc_savings_6194');
@@ -510,11 +542,181 @@ class LocalLedgerService {
       };
     }
 
+    // Recipients
+    if (path === '/api/recipients' && method === 'GET') {
+      return [
+        {
+          accountNumber: '4892018437',
+          routingNumber: '021000021',
+          bankName: 'Chase Bank',
+          code: 'ACC_001',
+          name: 'Elaine Jefferson',
+          accountType: 'Individual',
+        },
+        {
+          accountNumber: '8104928371',
+          routingNumber: '121000248',
+          bankName: 'Wells Fargo Bank',
+          code: 'ACC_002',
+          name: "Children's Hospital of Philadelphia",
+          accountType: 'Institutional / Donation',
+        },
+        {
+          accountNumber: '3751920482',
+          routingNumber: '051000017',
+          bankName: 'Bank of America',
+          code: 'ACC_003',
+          name: 'Stephan A. Grupp',
+          accountType: 'Individual',
+        },
+      ];
+    }
+
+    // V1 Bank Inquiry & Lookup
+    if (path === '/api/v1/bank/lookup' && method === 'POST') {
+      const q = (body.account_number || body.accountNumber || '').toString().trim().toUpperCase();
+      const db: Record<string, { bank: string; routing: string; account_name: string }> = {
+        "4892018437": { bank: "Chase Bank", routing: "021000021", account_name: "Elaine Jefferson" },
+        "8104928371": { bank: "Wells Fargo Bank", routing: "121000248", account_name: "Children's Hospital of Philadelphia" },
+        "3751920482": { bank: "Bank of America", routing: "051000017", account_name: "Stephan A. Grupp" }
+      };
+      let match = db[q];
+      if (!match) {
+        if (q === '1001234501') match = db["4892018437"];
+        else if (q === '1001234502') match = db["8104928371"];
+        else if (q === '1001234503') match = db["3751920482"];
+      }
+      if (match) {
+        return { status: "success", bank_name: match.bank, routing_number: match.routing, account_name: match.account_name };
+      }
+      throw new Error("Account number not found or invalid.");
+    }
+
+    if (path === '/api/v1/bank/transfer' && method === 'POST') {
+      const accNum = (body.account_number || body.accountNumber || '').toString().trim();
+      const amount = parseFloat(body.amount);
+      const db: Record<string, { bank: string; routing: string; account_name: string }> = {
+        "4892018437": { bank: "Chase Bank", routing: "021000021", account_name: "Elaine Jefferson" },
+        "8104928371": { bank: "Wells Fargo Bank", routing: "121000248", account_name: "Children's Hospital of Philadelphia" },
+        "3751920482": { bank: "Bank of America", routing: "051000017", account_name: "Stephan A. Grupp" }
+      };
+      let match = db[accNum];
+      if (!match) {
+        if (accNum === '1001234501') match = db["4892018437"];
+        else if (accNum === '1001234502') match = db["8104928371"];
+        else if (accNum === '1001234503') match = db["3751920482"];
+      }
+      if (!match) throw new Error("Invalid recipient account.");
+      const chk = this.state.accounts.find(a => a.id === 'acc_checking_4821') || this.state.accounts[0];
+      if (chk.availableBalance < amount) throw new Error("Insufficient funds.");
+      chk.availableBalance = Math.round((chk.availableBalance - amount) * 100) / 100;
+      this.saveState();
+      return {
+        status: "success",
+        message: `Successfully transferred $${amount.toFixed(2)} to ${match.account_name}.`,
+        new_balance: chk.availableBalance
+      };
+    }
+
+    if (path === '/api/recipients/lookup') {
+      const q = (url.searchParams.get('accountNumber') || '').trim().toUpperCase();
+      const rQuery = (url.searchParams.get('routingNumber') || '').trim();
+      const recs = [
+        { accountNumber: '4892018437', routingNumber: '021000021', bankName: 'Chase Bank', code: 'ACC_001', name: 'Elaine Jefferson', accountType: 'Individual' as const },
+        { accountNumber: '8104928371', routingNumber: '121000248', bankName: 'Wells Fargo Bank', code: 'ACC_002', name: "Children's Hospital of Philadelphia", accountType: 'Institutional / Donation' as const },
+        { accountNumber: '3751920482', routingNumber: '051000017', bankName: 'Bank of America', code: 'ACC_003', name: 'Stephan A. Grupp', accountType: 'Individual' as const },
+      ];
+      const match = recs.find(
+        r =>
+          r.accountNumber === q ||
+          r.code === q ||
+          (rQuery && r.routingNumber === rQuery) ||
+          r.name.toUpperCase().includes(q) ||
+          (q === '1001234501' && r.code === 'ACC_001') ||
+          (q === '1001234502' && r.code === 'ACC_002') ||
+          (q === '1001234503' && r.code === 'ACC_003')
+      );
+      if (!match) throw new Error('Invalid Account Number');
+      return { success: true, recipient: match };
+    }
+
     // Transfers
     if (path === '/api/transfers' && method === 'POST') {
-      throw new Error(
-        'All accounts are currently inactive and frozen. Transfers into or out of these accounts are completely disabled.'
+      const req = body as TransferRequest;
+      const chk = this.state.accounts.find(a => a.id === req.fromAccountId) || this.state.accounts[0];
+      if (req.pin?.trim() !== '2580') {
+        throw new Error('Invalid Security PIN. Please enter your authorized 4-digit Transfer PIN.');
+      }
+      if (chk.availableBalance < req.amount) {
+        throw new Error('Insufficient Funds');
+      }
+      const recs = [
+        { accountNumber: '4892018437', routingNumber: '021000021', bankName: 'Chase Bank', code: 'ACC_001', name: 'Elaine Jefferson', accountType: 'Individual' },
+        { accountNumber: '8104928371', routingNumber: '121000248', bankName: 'Wells Fargo Bank', code: 'ACC_002', name: "Children's Hospital of Philadelphia", accountType: 'Institutional / Donation' },
+        { accountNumber: '3751920482', routingNumber: '051000017', bankName: 'Bank of America', code: 'ACC_003', name: 'Stephan A. Grupp', accountType: 'Individual' },
+      ];
+      const targetQuery = (req.recipientAccountNumber || req.toPayeeId || req.recipientName || '').toUpperCase();
+      const match = recs.find(
+        r =>
+          r.accountNumber === targetQuery ||
+          r.code === targetQuery ||
+          r.name.toUpperCase().includes(targetQuery) ||
+          (targetQuery === '1001234501' && r.code === 'ACC_001') ||
+          (targetQuery === '1001234502' && r.code === 'ACC_002') ||
+          (targetQuery === '1001234503' && r.code === 'ACC_003')
       );
+      const recipientName = match ? match.name : (req.recipientName || 'Registered Recipient');
+      const recipientAcc = match ? match.accountNumber : (req.recipientAccountNumber || '4892018437');
+      const recipientRouting = match ? match.routingNumber : (req.recipientRoutingNumber || '021000021');
+      const recipientBank = match ? match.bankName : (req.recipientBankName || 'Chase Bank');
+      const recipientType = match ? match.accountType : 'Individual';
+
+      const oldAvailableBalance = chk.availableBalance;
+      const deductionAmount = req.amount;
+      const newAvailableBalance = Math.round((oldAvailableBalance - deductionAmount) * 100) / 100;
+      const restBal = chk.restrictedBalance || 3086370.46;
+      const newLedgerBalance = Math.round((restBal + newAvailableBalance) * 100) / 100;
+
+      chk.availableBalance = newAvailableBalance;
+      chk.availableReceivedBalance = newAvailableBalance;
+      chk.ledgerBalance = newLedgerBalance;
+
+      const tx: Transaction = {
+        id: `txn_${Date.now()}`,
+        reference: `TRF-${Date.now()}`,
+        accountId: chk.id,
+        date: new Date().toISOString().split('T')[0],
+        postingDate: new Date().toISOString().split('T')[0],
+        time: '12:00:00',
+        merchant: recipientName,
+        sender: 'Justin Jefferson',
+        recipient: recipientName,
+        fundType: 'outgoing_transfer',
+        description: `Transfer to ${recipientName}`,
+        category: 'Transfer',
+        type: 'debit',
+        amount: deductionAmount,
+        status: 'posted',
+        runningBalance: newLedgerBalance,
+        paymentMethod: 'Instant FedNow / Wire Transfer',
+        notes: `Authorized via 4-digit Security PIN. Debited from available funds.`,
+      };
+      this.state.transactions.unshift(tx);
+      this.saveState();
+
+      return {
+        success: true,
+        transaction: tx,
+        fromAccount: chk,
+        recipient: { name: recipientName, accountNumber: recipientAcc, accountType: recipientType },
+        balanceCalculation: {
+          oldAvailableBalance,
+          transferAmount: deductionAmount,
+          newAvailableBalance,
+          verificationFormula: `$${oldAvailableBalance.toFixed(2)} - $${deductionAmount.toFixed(2)} = $${newAvailableBalance.toFixed(2)}`,
+        },
+        message: `Transferred $${deductionAmount.toFixed(2)} to ${recipientName}. New Balance: $${newAvailableBalance.toFixed(2)}`,
+      };
     }
 
     // Payees

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   AlertTriangle,
   ShieldAlert,
+  ShieldCheck,
   CheckCircle2,
   XCircle,
   HelpCircle,
@@ -13,6 +14,8 @@ import {
   ExternalLink,
   X,
   Info,
+  Lock,
+  ArrowRight,
 } from 'lucide-react';
 import { Account, Transaction } from '../types/banking.ts';
 
@@ -61,24 +64,37 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
     resolution_instructions: 'Please visit your local U.S. Bank branch with valid government-issued photo identification to verify your identity and resolve this security hold.',
   };
 
+  const isRestrictedMode =
+    account.status === 'Restricted balance mode' || account.id === 'acc_checking_4821';
+
   return (
     <>
       {/* Prominent Alert Banner at the top of the Account Dashboard */}
       <div
         className={`relative overflow-hidden rounded-2xl border-2 shadow-md transition-all ${
-          isFrozen ? 'bg-rose-50/95 border-rose-300' : 'bg-amber-50/95 border-amber-300'
+          isRestrictedMode
+            ? 'bg-blue-50/95 border-blue-300'
+            : isFrozen
+            ? 'bg-rose-50/95 border-rose-300'
+            : 'bg-amber-50/95 border-amber-300'
         }`}
       >
         {/* Subtle patterned header strip */}
         <div
           className={`px-4 sm:px-6 py-2.5 text-white flex flex-wrap items-center justify-between gap-2 text-xs ${
-            isFrozen
+            isRestrictedMode
+              ? 'bg-gradient-to-r from-[#0C2340] via-[#005A9C] to-[#0C2340]'
+              : isFrozen
               ? 'bg-gradient-to-r from-rose-700 via-rose-600 to-rose-700'
               : 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600'
           }`}
         >
           <div className="flex items-center gap-2 font-bold tracking-wide">
-            <ShieldAlert className="w-4 h-4 text-white shrink-0" />
+            {isRestrictedMode ? (
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-white shrink-0" />
+            )}
             <span className="uppercase text-[11px] tracking-wider">Account Security Notice</span>
             <span className="opacity-60">•</span>
             <span>{account.name} ({account.accountNumberMasked})</span>
@@ -86,12 +102,16 @@ export const AccountRestrictionBanner: React.FC<AccountRestrictionBannerProps> =
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-xs ${
-                isFrozen ? 'bg-white text-rose-900' : 'bg-white text-amber-900'
+                isRestrictedMode
+                  ? 'bg-white text-[#005A9C]'
+                  : isFrozen
+                  ? 'bg-white text-rose-900'
+                  : 'bg-white text-amber-900'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isFrozen ? 'bg-rose-600' : 'bg-amber-500 animate-pulse'
+                  isRestrictedMode ? 'bg-[#005A9C]' : isFrozen ? 'bg-rose-600' : 'bg-amber-500 animate-pulse'
                 }`}
               ></span>
               {restriction.status_label}

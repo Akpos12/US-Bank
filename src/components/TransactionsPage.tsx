@@ -39,6 +39,7 @@ export const TransactionsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<string>('All');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [fundType, setFundType] = useState<'All' | 'restricted_existing' | 'newly_received' | 'outgoing_transfer'>('All');
 
   // Selected Transaction for Detail Panel
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
@@ -173,11 +174,17 @@ export const TransactionsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Filter transactions by fund type category (Restricted existing, newly received, outgoing)
+  const filteredTransactions = useMemo(() => {
+    if (fundType === 'All') return transactions;
+    return transactions.filter((t) => t.fundType === fundType);
+  }, [transactions, fundType]);
+
   // Group transactions by Date Header ("Today", "Yesterday", or formatted date)
   const groupedTransactions = useMemo(() => {
     const groups: { [key: string]: Transaction[] } = {};
 
-    transactions.forEach((tx) => {
+    filteredTransactions.forEach((tx) => {
       const txDate = tx.date; // e.g. "2026-10-18"
       let header = txDate;
 
@@ -197,7 +204,7 @@ export const TransactionsPage: React.FC = () => {
     });
 
     return groups;
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   return (
     <div className="space-y-6">
@@ -396,11 +403,58 @@ export const TransactionsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* 3 TRANSACTION HISTORY CATEGORIES (Restricted existing, newly received, outgoing) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-100 rounded-2xl border border-slate-200 gap-1 text-xs font-bold">
+        <button
+          onClick={() => setFundType('All')}
+          className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            fundType === 'All'
+              ? 'bg-white text-[#0C2340] shadow-xs ring-1 ring-slate-200/80'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>All Records</span>
+        </button>
+        <button
+          onClick={() => setFundType('restricted_existing')}
+          className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            fundType === 'restricted_existing'
+              ? 'bg-white text-slate-800 shadow-xs ring-1 ring-slate-200/80'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span>Restricted Existing Funds</span>
+        </button>
+        <button
+          onClick={() => setFundType('newly_received')}
+          className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            fundType === 'newly_received'
+              ? 'bg-emerald-50 text-emerald-900 shadow-xs border border-emerald-300'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Newly Received Funds</span>
+        </button>
+        <button
+          onClick={() => setFundType('outgoing_transfer')}
+          className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            fundType === 'outgoing_transfer'
+              ? 'bg-blue-50 text-blue-900 shadow-xs border border-blue-300'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-[#005A9C]"></span>
+          <span>Outgoing Transfers</span>
+        </button>
+      </div>
+
       {/* AUTHENTIC U.S. BANK HIGH-DENSITY TRANSACTION TABLE */}
       <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div className="text-xs text-slate-600">
-            Showing <span className="font-bold text-slate-900">{transactions.length}</span> of{' '}
+            Showing <span className="font-bold text-slate-900">{filteredTransactions.length}</span> of{' '}
             <span className="font-bold text-slate-900">{totalCount}</span> authoritative transactions
           </div>
           <div className="flex items-center gap-2 text-xs">
@@ -488,8 +542,23 @@ export const TransactionsPage: React.FC = () => {
                                 )}
                               </div>
                               <div>
-                                <div className="font-bold text-slate-900 group-hover:text-[#005A9C] transition-colors">
-                                  {tx.merchant}
+                                <div className="font-bold text-slate-900 group-hover:text-[#005A9C] transition-colors flex items-center gap-1.5 flex-wrap">
+                                  <span>{tx.merchant}</span>
+                                  {tx.fundType === 'newly_received' && (
+                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                      Newly Received
+                                    </span>
+                                  )}
+                                  {tx.fundType === 'outgoing_transfer' && (
+                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-[#005A9C] border border-blue-200">
+                                      Outgoing Transfer
+                                    </span>
+                                  )}
+                                  {tx.fundType === 'restricted_existing' && (
+                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 text-slate-600">
+                                      Restricted Balance
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[11px] text-slate-500 line-clamp-1">{tx.description}</div>
                               </div>

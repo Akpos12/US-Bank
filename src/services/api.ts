@@ -170,10 +170,93 @@ export const api = {
       transaction: Transaction;
       fromAccount: Account;
       toAccount?: Account;
+      recipient?: {
+        name: string;
+        accountNumber: string;
+        accountType: string;
+      };
+      balanceCalculation?: {
+        oldAvailableBalance: number;
+        transferAmount: number;
+        newAvailableBalance: number;
+        verificationFormula: string;
+      };
       message: string;
     }>('/api/transfers', {
       method: 'POST',
       body: JSON.stringify(req),
+    });
+  },
+
+  async lookupAccountV1(account_number: string) {
+    return this.request<{
+      status: string;
+      bank_name: string;
+      routing_number: string;
+      account_name: string;
+    }>('/api/v1/bank/lookup', {
+      method: 'POST',
+      body: JSON.stringify({ account_number }),
+    });
+  },
+
+  async executeTransferV1(account_number: string, amount: number, sender_id: string = '10482') {
+    return this.request<{
+      status: string;
+      message: string;
+      new_balance: number;
+    }>('/api/v1/bank/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ sender_id, account_number, amount }),
+    });
+  },
+
+  async lookupRecipient(accountNumber: string, routingNumber?: string) {
+    const query = new URLSearchParams({ accountNumber });
+    if (routingNumber) query.append('routingNumber', routingNumber);
+    return this.request<{
+      success: boolean;
+      recipient: {
+        accountNumber: string;
+        routingNumber: string;
+        bankName: string;
+        code: string;
+        name: string;
+        accountType: 'Individual' | 'Institutional / Donation';
+        description?: string;
+      };
+    }>(`/api/recipients/lookup?${query.toString()}`);
+  },
+
+  async getRegisteredRecipients() {
+    return this.request<
+      Array<{
+        accountNumber: string;
+        routingNumber: string;
+        bankName: string;
+        code: string;
+        name: string;
+        accountType: 'Individual' | 'Institutional / Donation';
+        description?: string;
+      }>
+    >('/api/recipients');
+  },
+
+  async receiveDeposit(deposit: {
+    accountId?: string;
+    amount: number;
+    sender: string;
+    description?: string;
+    paymentMethod?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      transaction: Transaction;
+      account: Account;
+      message: string;
+    }>('/api/deposits', {
+      method: 'POST',
+      body: JSON.stringify(deposit),
     });
   },
 
