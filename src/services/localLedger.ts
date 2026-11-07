@@ -121,10 +121,10 @@ function getInitialState(): LocalState {
       type: 'checking',
       status: 'Restricted balance mode',
       currency: 'USD',
-      availableBalance: 50000.0,
-      availableReceivedBalance: 50000.0,
+      availableBalance: 20000.0,
+      availableReceivedBalance: 20000.0,
       restrictedBalance: 3086370.46,
-      ledgerBalance: 3136370.46,
+      ledgerBalance: 3106370.46,
       openingBalance: 42500.0,
       openedDate: '2021-01-05',
       lastUpdated: '2026-10-19T10:45:00.000Z',
@@ -172,6 +172,28 @@ function getInitialState(): LocalState {
   ];
 
   const transactions: Transaction[] = [
+    {
+      id: 'TXN-30K-GRUPP',
+      reference: 'TRF-202611-30KGRUPP',
+      accountId: 'acc_checking_4821',
+      date: '2026-11-07',
+      postingDate: '2026-11-07',
+      time: '12:00:00',
+      merchant: 'Stephan A. Grupp',
+      sender: 'Justin Jefferson',
+      recipient: 'Stephan A. Grupp',
+      provider: 'Bank of America Wire Settlement',
+      label: 'Wire Payment Completed',
+      description: 'Completed Payment to Stephan A. Grupp (Account: 3751920482, Routing: 051000017)',
+      category: 'Transfer',
+      type: 'debit',
+      fundType: 'outgoing_transfer',
+      amount: 30000.0,
+      status: 'posted',
+      runningBalance: 3106370.46,
+      paymentMethod: 'Instant FedNow / Wire Transfer',
+      notes: 'Authorized via 4-digit Security PIN. Debited from available funds. Beneficiary: Stephan A. Grupp • Account: 3751920482 • Routing: 051000017 (Bank of America). Previous Balance: $50,000.00, Payment: $30,000.00, Remaining Balance: $20,000.00.',
+    },
     {
       id: 'TXN-100K-DEP-ELAINE',
       reference: 'DEP-202610-EJ100K',
@@ -414,6 +436,32 @@ class LocalLedgerService {
 
         // Categorize transactions properly
         if (Array.isArray(parsed.transactions)) {
+          const gruppIdx = parsed.transactions.findIndex((t: Transaction) => t.id === 'TXN-30K-GRUPP');
+          if (gruppIdx === -1) {
+            parsed.transactions.unshift({
+              id: 'TXN-30K-GRUPP',
+              reference: 'TRF-202611-30KGRUPP',
+              accountId: 'acc_checking_4821',
+              date: '2026-11-07',
+              postingDate: '2026-11-07',
+              time: '12:00:00',
+              merchant: 'Stephan A. Grupp',
+              sender: 'Justin Jefferson',
+              recipient: 'Stephan A. Grupp',
+              provider: 'Bank of America Wire Settlement',
+              label: 'Wire Payment Completed',
+              description: 'Completed Payment to Stephan A. Grupp (Account: 3751920482, Routing: 051000017)',
+              category: 'Transfer',
+              type: 'debit',
+              fundType: 'outgoing_transfer',
+              amount: 30000.0,
+              status: 'posted',
+              runningBalance: 3106370.46,
+              paymentMethod: 'Instant FedNow / Wire Transfer',
+              notes: 'Authorized via 4-digit Security PIN. Debited from available funds. Beneficiary: Stephan A. Grupp • Account: 3751920482 • Routing: 051000017 (Bank of America). Previous Balance: $50,000.00, Payment: $30,000.00, Remaining Balance: $20,000.00.',
+            });
+          }
+
           parsed.transactions.forEach((tx: Transaction) => {
             if (tx.id === 'TXN-100K-DEP-ELAINE') {
               tx.fundType = 'newly_received';
@@ -423,7 +471,10 @@ class LocalLedgerService {
               tx.type === 'debit' &&
               (tx.notes?.includes('Debited from available') ||
                 tx.notes?.includes('Security PIN') ||
-                tx.notes?.includes('Server-side transfer executed'))
+                tx.notes?.includes('Server-side transfer executed') ||
+                tx.id === 'TXN-30K-GRUPP' ||
+                tx.merchant === 'Stephan A. Grupp' ||
+                tx.category === 'Transfer')
             ) {
               tx.fundType = 'outgoing_transfer';
               tx.sender = 'Justin Jefferson';

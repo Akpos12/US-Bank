@@ -214,7 +214,7 @@ export const TransactionsPage: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-extrabold text-[#0C2340] tracking-tight">Account Activity & Ledger</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#005A9C] border border-blue-200">
-              Premium Checking •••• 4821
+              Premium Checking •••• 8371
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">

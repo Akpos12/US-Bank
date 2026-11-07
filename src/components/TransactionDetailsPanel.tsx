@@ -152,7 +152,7 @@ export const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = (
 
             <div className="flex items-center justify-between py-2 border-b border-slate-100">
               <span className="text-xs font-medium text-slate-500">Account</span>
-              <span className="text-xs font-medium text-slate-900">Premium Checking •••• 4821</span>
+              <span className="text-xs font-medium text-slate-900">Premium Checking •••• 8371</span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-slate-100 bg-slate-50/70 p-3 rounded-lg">
@@ -170,6 +170,15 @@ export const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = (
                 <span className="text-xs font-medium text-slate-500 block mb-1">Memo & Narrative</span>
                 <p className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
                   {transaction.description}
+                </p>
+              </div>
+            )}
+
+            {transaction.notes && (
+              <div className="pt-2">
+                <span className="text-xs font-medium text-slate-500 block mb-1">Transaction Details & Audit Log</span>
+                <p className="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 font-mono leading-relaxed">
+                  {transaction.notes}
                 </p>
               </div>
             )}
@@ -271,7 +280,7 @@ export const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = (
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Account Number</span>
-                    <span className="font-mono font-medium text-slate-800 text-xs">Premium Checking •••• 4821</span>
+                    <span className="font-mono font-medium text-slate-800 text-xs">Premium Checking •••• 8371</span>
                   </div>
                 </div>
 
