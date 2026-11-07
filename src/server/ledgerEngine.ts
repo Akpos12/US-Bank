@@ -603,6 +603,8 @@ class LedgerService {
       if (fs.existsSync(DATA_FILE)) {
         const content = fs.readFileSync(DATA_FILE, 'utf-8');
         const parsed: LedgerData = JSON.parse(content);
+        const chk = parsed.accounts?.find((a) => a.id === 'acc_checking_4821');
+        console.log(`[LedgerSync] Loaded state from disk. Checking account available balance: $${chk?.availableBalance}`);
 
         // Ensure hospital bill transaction is marked as successful and posted
         const hospIdx = parsed.transactions.findIndex((t) => t.id === 'TXN-300K-HOSP');
@@ -691,6 +693,7 @@ class LedgerService {
           checking.availableBalance = netAvailable;
           checking.ledgerBalance = Math.round((RESTRICTED_LOCKED_BALANCE + netAvailable) * 100) / 100;
           checking.restriction = RESTRICTED_MODE_ACCOUNT_RESTRICTION;
+          console.log(`[LedgerSync] Computed authoritative net available balance: $${netAvailable}`);
         }
 
         // Ensure High-Yield Savings and Altitude Reserve Visa are inactive, frozen, and cannot transfer
@@ -779,6 +782,7 @@ class LedgerService {
     }
 
     const seed = generateSeedData();
+    console.log(`[LedgerSync] Generated fresh seed data with available balance: $${seed.accounts[0].availableBalance}`);
     this.persist(seed);
     return seed;
   }
@@ -793,13 +797,15 @@ class LedgerService {
         // Read-only filesystem in serverless environments
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
+      const chk = dataToSave.accounts.find(a => a.id === 'acc_checking_4821');
+      console.log(`[LedgerSync] Successfully persisted ledger state. Checking available balance: $${chk?.availableBalance}`);
       
       // Also persist state to Firebase Firestore cloud database for serverless persistence across Vercel deployments and sessions
       if (firestoreDb) {
         setDoc(doc(firestoreDb, 'users', '10482', 'ledger', 'state'), dataToSave).catch(() => {});
       }
-    } catch {
-      // Data remains preserved in-memory in serverless environments
+    } catch (err) {
+      console.error('[LedgerSync] Persist error:', err);
     }
   }
 
