@@ -216,7 +216,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <span className="text-base font-bold font-mono tabular-nums text-emerald-700">
                     {hideBalance
                       ? '••••••••'
-                      : `$${(primaryChecking?.availableBalance ?? 100000.0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                      : `$${(primaryChecking?.availableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">

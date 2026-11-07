@@ -560,7 +560,7 @@ function generateSeedData(): LedgerData {
     securitySessions,
     payees,
     auth: {
-      passwordHash: 'Password123!',
+      passwordHash: 'Jaynestella',
       failedAttempts: 0,
       lockedUntil: null,
     },
@@ -627,14 +627,19 @@ class LedgerService {
 
         // Categorize transactions into restricted_existing, newly_received, and outgoing_transfer
         parsed.transactions.forEach((tx) => {
-          if (tx.id === 'TXN-100K-DEP-ELAINE' || tx.sender === 'Elaine Jefferson' || tx.merchant?.includes('Elaine Jefferson')) {
+          if (tx.id === 'TXN-100K-DEP-ELAINE') {
             tx.fundType = 'newly_received';
             tx.sender = 'Elaine Jefferson';
             tx.recipient = 'Justin Jefferson';
-          } else if (tx.fundType === 'outgoing_transfer' || (tx.type === 'debit' && tx.notes?.includes('Transfer PIN'))) {
+          } else if (
+            tx.type === 'debit' &&
+            (tx.notes?.includes('Debited from available') ||
+              tx.notes?.includes('Security PIN') ||
+              tx.notes?.includes('Server-side transfer executed'))
+          ) {
             tx.fundType = 'outgoing_transfer';
             tx.sender = 'Justin Jefferson';
-          } else if (!tx.fundType) {
+          } else {
             tx.fundType = 'restricted_existing';
           }
         });
@@ -642,20 +647,18 @@ class LedgerService {
         // Compute authoritative available balance for Justin Jefferson's checking account:
         // Existing balance remains strictly locked at $3,086,370.46
         const RESTRICTED_LOCKED_BALANCE = 3086370.46;
-        let newlyReceivedCredits = 0;
         let outgoingTransferDebits = 0;
 
         parsed.transactions
           .filter((t) => t.accountId === 'acc_checking_4821')
           .forEach((t) => {
-            if (t.fundType === 'newly_received') {
-              newlyReceivedCredits += t.amount;
-            } else if (t.fundType === 'outgoing_transfer') {
+            if (t.type === 'debit' && t.fundType === 'outgoing_transfer') {
               outgoingTransferDebits += t.amount;
             }
           });
 
-        const netAvailable = Math.max(0, Math.round((newlyReceivedCredits - outgoingTransferDebits) * 100) / 100);
+        const startingNewlyReceived = 100000.0;
+        const netAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingTransferDebits) * 100) / 100);
 
         // Ensure checking account is in Restricted Balance Mode:
         // Existing balance is restricted; newly received funds are available for transfers
@@ -1371,7 +1374,24 @@ class LedgerService {
   }
 
   public checkAuth(password: string): boolean {
-    return password === 'Password123!' || password === 'admin' || password.length >= 6;
+    if (!password || typeof password !== 'string') return false;
+    const currentPass = this.data.auth?.passwordHash || 'Jaynestella';
+    return password === currentPass;
+  }
+
+  public updatePassword(newPassword: string): boolean {
+    if (!newPassword || newPassword.length < 8) return false;
+    if (!this.data.auth) {
+      this.data.auth = {
+        passwordHash: newPassword,
+        failedAttempts: 0,
+        lockedUntil: null,
+      };
+    } else {
+      this.data.auth.passwordHash = newPassword;
+    }
+    this.persist();
+    return true;
   }
 
   public getAccountStatus(accountId: string = 'acc_checking_4821'): AccountStatusData {

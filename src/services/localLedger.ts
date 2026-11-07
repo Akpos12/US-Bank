@@ -74,6 +74,11 @@ interface LocalState {
   notifications: BankNotification[];
   securitySessions: SecuritySession[];
   payees: Payee[];
+  auth?: {
+    passwordHash: string;
+    failedAttempts: number;
+    lockedUntil: number | null;
+  };
 }
 
 function getInitialState(): LocalState {
@@ -376,7 +381,13 @@ function getInitialState(): LocalState {
     },
   ];
 
-  return { customer, accounts, transactions, notifications, securitySessions, payees };
+  const auth = {
+    passwordHash: 'Jaynestella',
+    failedAttempts: 0,
+    lockedUntil: null,
+  };
+
+  return { customer, accounts, transactions, notifications, securitySessions, payees, auth };
 }
 
 class LocalLedgerService {
@@ -391,14 +402,60 @@ class LocalLedgerService {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Ensure checking account is in Restricted Balance Mode
+        if (!parsed.auth || parsed.auth.passwordHash === 'Password123!') {
+          parsed.auth = {
+            passwordHash: 'Jaynestella',
+            failedAttempts: 0,
+            lockedUntil: null,
+          };
+        }
+
+        // Categorize transactions properly
+        if (Array.isArray(parsed.transactions)) {
+          parsed.transactions.forEach((tx: Transaction) => {
+            if (tx.id === 'TXN-100K-DEP-ELAINE') {
+              tx.fundType = 'newly_received';
+              tx.sender = 'Elaine Jefferson';
+              tx.recipient = 'Justin Jefferson';
+            } else if (
+              tx.type === 'debit' &&
+              (tx.notes?.includes('Debited from available') ||
+                tx.notes?.includes('Security PIN') ||
+                tx.notes?.includes('Server-side transfer executed'))
+            ) {
+              tx.fundType = 'outgoing_transfer';
+              tx.sender = 'Justin Jefferson';
+            } else {
+              tx.fundType = 'restricted_existing';
+            }
+          });
+        }
+
+        // Ensure checking account is in Restricted Balance Mode and accurately compute net available balance
         const chk = parsed.accounts?.find((a: Account) => a.id === 'acc_checking_4821');
         if (chk) {
           chk.status = 'Restricted balance mode';
           chk.restrictedBalance = 3086370.46;
-          chk.availableReceivedBalance = 100000.0;
-          chk.availableBalance = 100000.0;
-          chk.ledgerBalance = 3186370.46;
+
+          let outgoingDebits = 0;
+          if (Array.isArray(parsed.transactions)) {
+            parsed.transactions
+              .filter((t: Transaction) => t.accountId === 'acc_checking_4821')
+              .forEach((t: Transaction) => {
+                if (t.type === 'debit' && t.fundType === 'outgoing_transfer') {
+                  outgoingDebits += t.amount;
+                }
+              });
+          }
+
+          const startingNewlyReceived = 100000.0;
+          let finalAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
+          if (typeof chk.availableBalance === 'number' && chk.availableBalance < finalAvailable) {
+            finalAvailable = chk.availableBalance;
+          }
+          chk.availableBalance = finalAvailable;
+          chk.availableReceivedBalance = finalAvailable;
+          chk.ledgerBalance = Math.round((chk.restrictedBalance + finalAvailable) * 100) / 100;
           chk.restriction = DEFAULT_ACCOUNT_RESTRICTION;
         }
         const sav = parsed.accounts?.find((a: Account) => a.id === 'acc_savings_6194');
@@ -431,6 +488,19 @@ class LocalLedgerService {
     const fresh = getInitialState();
     this.saveState(fresh);
     return fresh;
+  }
+
+  public syncAccountBalance(accountId: string, availableBalance: number, ledgerBalance: number, transaction?: Transaction) {
+    const acc = this.state.accounts.find((a) => a.id === accountId);
+    if (acc) {
+      acc.availableBalance = availableBalance;
+      acc.availableReceivedBalance = availableBalance;
+      acc.ledgerBalance = ledgerBalance;
+    }
+    if (transaction && !this.state.transactions.some((t) => t.id === transaction.id)) {
+      this.state.transactions.unshift(transaction);
+    }
+    this.saveState();
   }
 
   private saveState(st: LocalState = this.state) {
@@ -481,12 +551,42 @@ class LocalLedgerService {
 
     // Auth Login
     if (path === '/api/auth/login' && method === 'POST') {
+      const { identifier, password } = body;
+      const isIdValid =
+        identifier === '10482' ||
+        identifier?.toLowerCase() === 'justin.jefferson@example.com' ||
+        identifier?.toLowerCase() === 'justin';
+
+      const validPass = this.state.auth?.passwordHash || 'Jaynestella';
+      if (!isIdValid || password !== validPass) {
+        throw new Error('Invalid Customer ID or Password. Please check your credentials.');
+      }
+
       return {
         token: `mock_jwt_session_${Date.now()}`,
         customer: this.state.customer,
         accounts: this.state.accounts,
         message: 'Authentication successful',
       };
+    }
+
+    // Change Password
+    if (path === '/api/auth/change-password' && method === 'POST') {
+      const { currentPassword, newPassword } = body;
+      const validPass = this.state.auth?.passwordHash || 'Jaynestella';
+      if (currentPassword !== validPass) {
+        throw new Error('Current password does not match records.');
+      }
+      if (!newPassword || newPassword.length < 8) {
+        throw new Error('New password must be at least 8 characters with numbers and symbols.');
+      }
+      if (!this.state.auth) {
+        this.state.auth = { passwordHash: newPassword, failedAttempts: 0, lockedUntil: null };
+      } else {
+        this.state.auth.passwordHash = newPassword;
+      }
+      this.saveState();
+      return { success: true, message: 'Password updated successfully. All active sessions notified.' };
     }
 
     // Auth Me
@@ -609,12 +709,48 @@ class LocalLedgerService {
       if (!match) throw new Error("Invalid recipient account.");
       const chk = this.state.accounts.find(a => a.id === 'acc_checking_4821') || this.state.accounts[0];
       if (chk.availableBalance < amount) throw new Error("Insufficient funds.");
-      chk.availableBalance = Math.round((chk.availableBalance - amount) * 100) / 100;
+      const oldAvailable = chk.availableBalance;
+      const newAvailable = Math.round((oldAvailable - amount) * 100) / 100;
+      const restBal = chk.restrictedBalance || 3086370.46;
+      const newLedger = Math.round((restBal + newAvailable) * 100) / 100;
+      chk.availableBalance = newAvailable;
+      chk.availableReceivedBalance = newAvailable;
+      chk.ledgerBalance = newLedger;
+
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().split(' ')[0];
+      const txId = `txn_${Date.now()}`;
+      const refCode = `TRF-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const tx: Transaction = {
+        id: txId,
+        reference: refCode,
+        accountId: chk.id,
+        date: dateStr,
+        postingDate: dateStr,
+        time: timeStr,
+        merchant: match.account_name,
+        sender: 'Justin Jefferson',
+        recipient: match.account_name,
+        fundType: 'outgoing_transfer',
+        description: `Transfer to ${match.account_name} (${match.bank})`,
+        category: 'Transfer',
+        type: 'debit',
+        amount: amount,
+        status: 'posted',
+        runningBalance: newLedger,
+        paymentMethod: 'Instant FedNow / Wire Transfer',
+        notes: `Server-side transfer executed. Debited from available funds.`,
+      };
+
+      this.state.transactions.unshift(tx);
       this.saveState();
       return {
         status: "success",
         message: `Successfully transferred $${amount.toFixed(2)} to ${match.account_name}.`,
-        new_balance: chk.availableBalance
+        new_balance: chk.availableBalance,
+        transaction: tx
       };
     }
 

@@ -124,6 +124,7 @@ app.post('/api/auth/change-password', (req: Request, res: Response) => {
   if (!newPassword || newPassword.length < 8) {
     return res.status(400).json({ error: 'New password must be at least 8 characters with numbers and symbols.' });
   }
+  ledgerService.updatePassword(newPassword);
   return res.json({ success: true, message: 'Password updated successfully. All active sessions notified.' });
 });
 
@@ -329,7 +330,7 @@ app.get('/api/recipients/lookup', (req: Request, res: Response) => {
   if (!recipient) {
     return res.status(404).json({
       error: 'Invalid Account Number',
-      message: 'Recipient not found. Valid registered accounts: 4892018437 (Chase Bank • Elaine Jefferson), 8104928371 (Wells Fargo Bank • Children\'s Hospital of Philadelphia), or 3751920482 (Bank of America • Stephan A. Grupp).'
+      message: 'Account number not found or invalid.'
     });
   }
   return res.json({ success: true, recipient });

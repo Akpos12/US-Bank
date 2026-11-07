@@ -35,11 +35,11 @@
       "type": "checking",
       "status": "Restricted balance mode",
       "currency": "USD",
-      "availableBalance": 100000,
-      "ledgerBalance": 3186370.46,
+      "availableBalance": 98500,
+      "ledgerBalance": 3184870.46,
       "openingBalance": 42500,
       "openedDate": "2021-01-05",
-      "lastUpdated": "2026-10-19T10:45:00.000Z",
+      "lastUpdated": "2026-11-07T19:49:06.884Z",
       "interestRate": 0.45,
       "isPrimary": true,
       "restriction": {
@@ -62,7 +62,7 @@
         "resolution_instructions": "To unlock your restricted existing funds, please visit your local U.S. Bank branch with valid government identification."
       },
       "restrictedBalance": 3086370.46,
-      "availableReceivedBalance": 100000
+      "availableReceivedBalance": 98500
     },
     {
       "id": "acc_savings_6194",
@@ -132,6 +132,26 @@
     }
   ],
   "transactions": [
+    {
+      "id": "txn_1794080946884",
+      "reference": "TRF-202611-814202",
+      "accountId": "acc_checking_4821",
+      "date": "2026-11-07",
+      "postingDate": "2026-11-07",
+      "time": "19:49:06",
+      "merchant": "Children's Hospital of Philadelphia",
+      "sender": "Justin Jefferson",
+      "recipient": "Children's Hospital of Philadelphia",
+      "fundType": "outgoing_transfer",
+      "description": "Transfer to Children's Hospital of Philadelphia (Wells Fargo Bank)",
+      "category": "Transfer",
+      "type": "debit",
+      "amount": 1000,
+      "status": "posted",
+      "runningBalance": 3184870.46,
+      "paymentMethod": "Instant FedNow / Wire Transfer",
+      "notes": "Server-side transfer executed. Debited from available balance: $99500.00 - $1000.00 = $98500.00."
+    },
     {
       "id": "txn_2021_01_1002",
       "reference": "REF-202101-1001",
@@ -283,7 +303,8 @@
       "status": "posted",
       "runningBalance": 84687.23,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_01_1011",
@@ -504,7 +525,8 @@
       "status": "posted",
       "runningBalance": 126081.92,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_02_1024",
@@ -742,7 +764,8 @@
       "status": "posted",
       "runningBalance": 179942.99,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_03_1038",
@@ -980,7 +1003,8 @@
       "status": "posted",
       "runningBalance": 219957.25,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_04_1052",
@@ -1235,7 +1259,8 @@
       "status": "posted",
       "runningBalance": 273623.58,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_05_1067",
@@ -1456,7 +1481,8 @@
       "status": "posted",
       "runningBalance": 315035.63,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_06_1080",
@@ -1711,7 +1737,8 @@
       "status": "posted",
       "runningBalance": 367597.76,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_07_1095",
@@ -1932,7 +1959,8 @@
       "status": "posted",
       "runningBalance": 409050.22,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_08_1108",
@@ -2187,7 +2215,8 @@
       "status": "posted",
       "runningBalance": 462779,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_09_1123",
@@ -2425,7 +2454,8 @@
       "status": "posted",
       "runningBalance": 502892.25,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_10_1137",
@@ -2663,7 +2693,8 @@
       "status": "posted",
       "runningBalance": 556892.68,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_11_1151",
@@ -2884,7 +2915,8 @@
       "status": "posted",
       "runningBalance": 598426.38,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2021_12_1164",
@@ -3156,7 +3188,8 @@
       "status": "posted",
       "runningBalance": 650837.62,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_01_1180",
@@ -3377,7 +3410,8 @@
       "status": "posted",
       "runningBalance": 692389.22,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_02_1193",
@@ -3615,7 +3649,8 @@
       "status": "posted",
       "runningBalance": 746471,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_03_1207",
@@ -3853,7 +3888,8 @@
       "status": "posted",
       "runningBalance": 786706.04,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_04_1221",
@@ -4108,7 +4144,8 @@
       "status": "posted",
       "runningBalance": 840533.22,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_05_1236",
@@ -4329,7 +4366,8 @@
       "status": "posted",
       "runningBalance": 882166.19,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_06_1249",
@@ -4584,7 +4622,8 @@
       "status": "posted",
       "runningBalance": 934949.32,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_07_1264",
@@ -4805,7 +4844,8 @@
       "status": "posted",
       "runningBalance": 976559.11,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_08_1277",
@@ -5060,7 +5100,8 @@
       "status": "posted",
       "runningBalance": 1030512.78,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_09_1292",
@@ -5298,7 +5339,8 @@
       "status": "posted",
       "runningBalance": 1070847.24,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_10_1306",
@@ -5536,7 +5578,8 @@
       "status": "posted",
       "runningBalance": 1125068.96,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_11_1320",
@@ -5757,7 +5800,8 @@
       "status": "posted",
       "runningBalance": 1166824.02,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2022_12_1333",
@@ -6029,7 +6073,8 @@
       "status": "posted",
       "runningBalance": 1219460.45,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_01_1349",
@@ -6250,7 +6295,8 @@
       "status": "posted",
       "runningBalance": 1261169.82,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_02_1362",
@@ -6488,7 +6534,8 @@
       "status": "posted",
       "runningBalance": 1315473.18,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_03_1376",
@@ -6726,7 +6773,8 @@
       "status": "posted",
       "runningBalance": 1355929.88,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_04_1390",
@@ -6981,7 +7029,8 @@
       "status": "posted",
       "runningBalance": 1409982.54,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_05_1405",
@@ -7202,7 +7251,8 @@
       "status": "posted",
       "runningBalance": 1451837.32,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_06_1418",
@@ -7457,7 +7507,8 @@
       "status": "posted",
       "runningBalance": 1504778.59,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_07_1433",
@@ -7678,7 +7729,8 @@
       "status": "posted",
       "runningBalance": 1546610.32,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_08_1446",
@@ -7933,7 +7985,8 @@
       "status": "posted",
       "runningBalance": 1600789.76,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_09_1461",
@@ -8171,7 +8224,8 @@
       "status": "posted",
       "runningBalance": 1641346.32,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_10_1475",
@@ -8409,7 +8463,8 @@
       "status": "posted",
       "runningBalance": 1695726.44,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_11_1489",
@@ -8630,7 +8685,8 @@
       "status": "posted",
       "runningBalance": 1737703.74,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2023_12_1502",
@@ -8902,7 +8958,8 @@
       "status": "posted",
       "runningBalance": 1790502.49,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_01_1518",
@@ -9123,7 +9180,8 @@
       "status": "posted",
       "runningBalance": 1832434.23,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_02_1531",
@@ -9361,7 +9419,8 @@
       "status": "posted",
       "runningBalance": 1886960.03,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_03_1545",
@@ -9599,7 +9658,8 @@
       "status": "posted",
       "runningBalance": 1927575.48,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_04_1559",
@@ -9854,7 +9914,8 @@
       "status": "posted",
       "runningBalance": 1981790.7,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_05_1574",
@@ -10075,7 +10136,8 @@
       "status": "posted",
       "runningBalance": 2023868.12,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_06_1587",
@@ -10330,7 +10392,8 @@
       "status": "posted",
       "runningBalance": 2077032.1,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_07_1602",
@@ -10551,7 +10614,8 @@
       "status": "posted",
       "runningBalance": 2119086.63,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_08_1615",
@@ -10806,7 +10870,8 @@
       "status": "posted",
       "runningBalance": 2173492.69,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_09_1630",
@@ -11044,7 +11109,8 @@
       "status": "posted",
       "runningBalance": 2214208.43,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_10_1644",
@@ -11282,7 +11348,8 @@
       "status": "posted",
       "runningBalance": 2268811.56,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_11_1658",
@@ -11503,7 +11570,8 @@
       "status": "posted",
       "runningBalance": 2310948.19,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2024_12_1671",
@@ -11775,7 +11843,8 @@
       "status": "posted",
       "runningBalance": 2363973.83,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_01_1687",
@@ -11996,7 +12065,8 @@
       "status": "posted",
       "runningBalance": 2406128.79,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_02_1700",
@@ -12234,7 +12304,8 @@
       "status": "posted",
       "runningBalance": 2460877.89,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_03_1714",
@@ -12472,7 +12543,8 @@
       "status": "posted",
       "runningBalance": 2501652.94,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_04_1728",
@@ -12727,7 +12799,8 @@
       "status": "posted",
       "runningBalance": 2556095.34,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_05_1743",
@@ -12948,7 +13021,8 @@
       "status": "posted",
       "runningBalance": 2598332.52,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_06_1756",
@@ -13203,7 +13277,8 @@
       "status": "posted",
       "runningBalance": 2651656.32,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_07_1771",
@@ -13424,7 +13499,8 @@
       "status": "posted",
       "runningBalance": 2693934.47,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_08_1784",
@@ -13679,7 +13755,8 @@
       "status": "posted",
       "runningBalance": 2748504.21,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_09_1799",
@@ -13917,7 +13994,8 @@
       "status": "posted",
       "runningBalance": 2789379.93,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_10_1813",
@@ -14155,7 +14233,8 @@
       "status": "posted",
       "runningBalance": 2844206.87,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_11_1827",
@@ -14376,7 +14455,8 @@
       "status": "posted",
       "runningBalance": 2886567.39,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2025_12_1840",
@@ -14648,7 +14728,8 @@
       "status": "posted",
       "runningBalance": 2939757,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_01_1856",
@@ -14869,7 +14950,8 @@
       "status": "posted",
       "runningBalance": 2982135.98,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_02_1869",
@@ -15107,7 +15189,8 @@
       "status": "posted",
       "runningBalance": 3037045.41,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_03_1883",
@@ -15345,7 +15428,8 @@
       "status": "posted",
       "runningBalance": 3077980.85,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_04_1897",
@@ -15600,7 +15684,8 @@
       "status": "posted",
       "runningBalance": 3132651.22,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_05_1912",
@@ -15821,7 +15906,8 @@
       "status": "posted",
       "runningBalance": 3175112.7,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_06_1925",
@@ -16076,7 +16162,8 @@
       "status": "posted",
       "runningBalance": 3228597.13,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_07_1940",
@@ -16297,7 +16384,8 @@
       "status": "posted",
       "runningBalance": 3271099.71,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_08_1953",
@@ -16552,7 +16640,8 @@
       "status": "posted",
       "runningBalance": 3325833.94,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_2026_09_1968",
@@ -16790,7 +16879,8 @@
       "status": "pending",
       "runningBalance": 3386870.46,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_1792352133368",
@@ -16807,7 +16897,8 @@
       "status": "posted",
       "runningBalance": 3386370.46,
       "paymentMethod": "ACH Electronic Transfer",
-      "fundType": "restricted_existing"
+      "fundType": "restricted_existing",
+      "sender": "Justin Jefferson"
     },
     {
       "id": "txn_recv_1792352133368",
@@ -16867,9 +16958,47 @@
       "paymentMethod": "Electronic Healthcare Settlement",
       "notes": "Verified, settled, and successfully posted.",
       "fundType": "restricted_existing"
+    },
+    {
+      "id": "txn_1794080933055",
+      "reference": "TRF-202611-751936",
+      "accountId": "acc_checking_4821",
+      "date": "2026-11-07",
+      "postingDate": "2026-11-07",
+      "time": "19:48:53",
+      "merchant": "Elaine Jefferson",
+      "sender": "Justin Jefferson",
+      "recipient": "Elaine Jefferson",
+      "fundType": "outgoing_transfer",
+      "description": "Outgoing Transfer to Elaine Jefferson",
+      "category": "Transfer",
+      "type": "debit",
+      "amount": 500,
+      "status": "posted",
+      "runningBalance": 3185870.46,
+      "paymentMethod": "Instant FedNow / Wire Transfer",
+      "notes": "Authorized via 4-digit Security PIN. Debited from available funds."
     }
   ],
   "notifications": [
+    {
+      "id": "notif_1794080933057",
+      "title": "Funds Transfer Completed",
+      "message": "Transfer of $500.00 to Elaine Jefferson has processed successfully (Ref: TRF-202611-751936). Available Balance: $99,500.00.",
+      "category": "transaction",
+      "timestamp": "2026-11-07T19:48:53.055Z",
+      "isRead": false,
+      "actionUrl": "/transactions"
+    },
+    {
+      "id": "notif_1794080486413",
+      "title": "Funds Transfer Completed",
+      "message": "Transfer of $1,000.00 to Elaine Jefferson has processed successfully (Ref: TRF-202611-867325). Available Balance: $99,000.00.",
+      "category": "transaction",
+      "timestamp": "2026-11-07T19:41:26.412Z",
+      "isRead": false,
+      "actionUrl": "/transactions"
+    },
     {
       "id": "notif_1793962070931",
       "title": "Funds Transfer Completed",
@@ -17029,7 +17158,7 @@
     }
   ],
   "auth": {
-    "passwordHash": "Password123!",
+    "passwordHash": "Jaynestella",
     "failedAttempts": 0,
     "lockedUntil": null
   }

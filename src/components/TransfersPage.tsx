@@ -748,7 +748,7 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ accounts, onTransf
             <div className="border-b border-slate-100 pb-4">
               <h2 className="text-lg font-bold text-[#0C2340]">Review Transfer & Authorize</h2>
               <p className="text-xs text-slate-500">
-                Please verify the beneficiary details and step-by-step balance calculation before confirming.
+                Please verify the beneficiary and transfer details, then enter your security PIN to authorize.
               </p>
             </div>
 
