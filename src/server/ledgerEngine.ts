@@ -379,15 +379,15 @@ function generateSeedData(): LedgerData {
   transactions.unshift(PENDING_HOSPITAL_TRANSACTION);
   transactions.unshift(TEST_DEPOSIT_TRANSACTION);
 
-  const initialAvailableReceived = 100000.0;
+  const initialAvailableReceived = 50000.0;
   const totalLedgerBalance = Math.round((RESTRICTED_LOCKED_BALANCE + initialAvailableReceived) * 100) / 100;
 
   const accounts: Account[] = [
     {
       id: 'acc_checking_4821',
       name: 'Premium Checking',
-      accountNumber: '1048214821',
-      accountNumberMasked: '•••• 4821',
+      accountNumber: '8104928371',
+      accountNumberMasked: '•••• 8371',
       routingNumber: '091000022',
       routingNumberMasked: '•••• 0022',
       type: 'checking',
@@ -680,13 +680,15 @@ class LedgerService {
             }
           });
 
-        const startingNewlyReceived = 100000.0;
+        const startingNewlyReceived = 50000.0;
         const netAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingTransferDebits) * 100) / 100);
 
         // Ensure checking account is in Restricted Balance Mode:
         // Existing balance is restricted; newly received funds are available for transfers
         const checking = parsed.accounts.find((a) => a.id === 'acc_checking_4821');
         if (checking) {
+          checking.accountNumber = '8104928371';
+          checking.accountNumberMasked = '•••• 8371';
           checking.status = 'Restricted balance mode';
           checking.restrictedBalance = RESTRICTED_LOCKED_BALANCE;
           checking.availableReceivedBalance = netAvailable;

@@ -114,17 +114,17 @@ function getInitialState(): LocalState {
     {
       id: 'acc_checking_4821',
       name: 'Premium Checking',
-      accountNumber: '1048214821',
-      accountNumberMasked: '•••• 4821',
+      accountNumber: '8104928371',
+      accountNumberMasked: '•••• 8371',
       routingNumber: '091000022',
       routingNumberMasked: '•••• 0022',
       type: 'checking',
       status: 'Restricted balance mode',
       currency: 'USD',
-      availableBalance: 100000.0,
-      availableReceivedBalance: 100000.0,
+      availableBalance: 50000.0,
+      availableReceivedBalance: 50000.0,
       restrictedBalance: 3086370.46,
-      ledgerBalance: 3186370.46,
+      ledgerBalance: 3136370.46,
       openingBalance: 42500.0,
       openedDate: '2021-01-05',
       lastUpdated: '2026-10-19T10:45:00.000Z',
@@ -450,7 +450,7 @@ class LocalLedgerService {
               });
           }
 
-          const startingNewlyReceived = 100000.0;
+          const startingNewlyReceived = 50000.0;
           let finalAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
           if (typeof chk.availableBalance === 'number' && chk.availableBalance < finalAvailable) {
             finalAvailable = chk.availableBalance;
@@ -509,7 +509,7 @@ class LocalLedgerService {
         });
     }
 
-    const startingNewlyReceived = 100000.0;
+    const startingNewlyReceived = 50000.0;
     const computedAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
 
     const acc = this.state.accounts.find((a) => a.id === accountId);
