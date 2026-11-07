@@ -576,8 +576,12 @@ class LedgerService {
 
   private loadOrInitialize(): LedgerData {
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+      try {
+        if (!fs.existsSync(DATA_DIR)) {
+          fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
+      } catch {
+        // Read-only filesystem in serverless environments
       }
       if (fs.existsSync(DATA_FILE)) {
         const content = fs.readFileSync(DATA_FILE, 'utf-8');
@@ -764,12 +768,16 @@ class LedgerService {
 
   private persist(dataToSave: LedgerData = this.data) {
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+      try {
+        if (!fs.existsSync(DATA_DIR)) {
+          fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
+      } catch {
+        // Read-only filesystem in serverless environments
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('Failed to write ledger data:', err);
+    } catch {
+      // Data remains preserved in-memory in serverless environments
     }
   }
 
