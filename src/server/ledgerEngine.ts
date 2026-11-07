@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import {
   Account,
   Customer,
@@ -13,6 +15,21 @@ import {
   AccountStatusData,
   RegisteredRecipient,
 } from '../types/banking.ts';
+
+let firestoreDb: any = null;
+try {
+  const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(configPath)) {
+    const configContent = fs.readFileSync(configPath, 'utf-8');
+    const firebaseConfig = JSON.parse(configContent);
+    const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    firestoreDb = firebaseConfig.firestoreDatabaseId
+      ? getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId)
+      : getFirestore(firebaseApp);
+  }
+} catch (e) {
+  console.warn('Firebase server-side init warning:', e);
+}
 
 export const ACCOUNTS_DATABASE: Record<
   string,
@@ -776,6 +793,11 @@ class LedgerService {
         // Read-only filesystem in serverless environments
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
+      
+      // Also persist state to Firebase Firestore cloud database for serverless persistence across Vercel deployments and sessions
+      if (firestoreDb) {
+        setDoc(doc(firestoreDb, 'users', '10482', 'ledger', 'state'), dataToSave).catch(() => {});
+      }
     } catch {
       // Data remains preserved in-memory in serverless environments
     }

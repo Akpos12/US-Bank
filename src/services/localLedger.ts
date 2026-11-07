@@ -503,24 +503,24 @@ class LocalLedgerService {
       this.state.transactions
         .filter((t: Transaction) => t.accountId === 'acc_checking_4821')
         .forEach((t: Transaction) => {
-          if (t.type === 'debit' && t.fundType === 'outgoing_transfer') {
+          if (t.type === 'debit' && (t.fundType === 'outgoing_transfer' || t.category === 'Transfer' || t.notes?.includes('Debited') || t.notes?.includes('PIN') || t.notes?.includes('executed'))) {
             outgoingDebits += t.amount;
           }
         });
     }
 
     const startingNewlyReceived = 100000.0;
-    let computedAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
-    if (availableBalance < computedAvailable) {
-      computedAvailable = availableBalance;
-    }
+    const computedAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
 
     const acc = this.state.accounts.find((a) => a.id === accountId);
     if (acc) {
-      acc.availableBalance = computedAvailable;
-      acc.availableReceivedBalance = computedAvailable;
+      // Strictly preserve the lowest / most updated balance (preventing outdated server responses of 100000 from overwriting spent funds)
+      const existingAvailable = acc.availableBalance;
+      const finalAvailable = Math.min(existingAvailable, computedAvailable, availableBalance);
+      acc.availableBalance = finalAvailable;
+      acc.availableReceivedBalance = finalAvailable;
       const restBal = acc.restrictedBalance || 3086370.46;
-      acc.ledgerBalance = Math.round((restBal + computedAvailable) * 100) / 100;
+      acc.ledgerBalance = Math.round((restBal + finalAvailable) * 100) / 100;
     }
     this.saveState();
   }
