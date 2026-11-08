@@ -608,7 +608,7 @@ function generateSeedData(): LedgerData {
   };
 }
 
-class LedgerService {
+export class LedgerService {
   private data: LedgerData;
 
   constructor() {
@@ -703,14 +703,16 @@ class LedgerService {
             tx.fundType = 'newly_received';
             tx.sender = 'Elaine Jefferson';
             tx.recipient = 'Justin Jefferson';
+          } else if (tx.merchant === 'US Bank High-Yield Savings' || tx.id.startsWith('txn_20')) {
+            // Historical transactions from 2021-2026 are part of restricted existing funds
+            tx.fundType = 'restricted_existing';
           } else if (
             tx.type === 'debit' &&
-            (tx.notes?.includes('Debited from available') ||
+            (tx.id === 'TXN-30K-GRUPP' ||
+              tx.notes?.includes('Debited from available') ||
               tx.notes?.includes('Security PIN') ||
               tx.notes?.includes('Server-side transfer executed') ||
-              tx.id === 'TXN-30K-GRUPP' ||
-              tx.merchant === 'Stephan A. Grupp' ||
-              tx.category === 'Transfer')
+              (tx.fundType === 'outgoing_transfer' && tx.id !== 'TXN-300K-HOSP'))
           ) {
             tx.fundType = 'outgoing_transfer';
             tx.sender = 'Justin Jefferson';
@@ -720,20 +722,21 @@ class LedgerService {
         });
 
         // Compute authoritative available balance for Justin Jefferson's checking account:
-        // Existing balance remains strictly locked at $3,086,370.46
+        // Existing balance remains strictly locked at $3,086,370.46.
+        // Baseline available balance starting point after Stephan A. Grupp's $30,000 completed payment is $20,000.00.
+        // Any subsequent outgoing transfers dynamically deduct from this $20,000.00 and stay persistent across refreshes.
         const RESTRICTED_LOCKED_BALANCE = 3086370.46;
-        let outgoingTransferDebits = 0;
+        let additionalOutgoingDebits = 0;
 
         parsed.transactions
           .filter((t) => t.accountId === 'acc_checking_4821')
           .forEach((t) => {
-            if (t.type === 'debit' && t.fundType === 'outgoing_transfer') {
-              outgoingTransferDebits += t.amount;
+            if (t.id !== 'TXN-30K-GRUPP' && t.type === 'debit' && t.fundType === 'outgoing_transfer') {
+              additionalOutgoingDebits += t.amount;
             }
           });
 
-        const startingNewlyReceived = 50000.0;
-        const netAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingTransferDebits) * 100) / 100);
+        const calculatedAvailable = Math.max(0, Math.round((20000.0 - additionalOutgoingDebits) * 100) / 100);
 
         // Ensure checking account is in Restricted Balance Mode:
         // Existing balance is restricted; newly received funds are available for transfers
@@ -743,11 +746,23 @@ class LedgerService {
           checking.accountNumberMasked = '•••• 8371';
           checking.status = 'Restricted balance mode';
           checking.restrictedBalance = RESTRICTED_LOCKED_BALANCE;
-          checking.availableReceivedBalance = netAvailable;
-          checking.availableBalance = netAvailable;
-          checking.ledgerBalance = Math.round((RESTRICTED_LOCKED_BALANCE + netAvailable) * 100) / 100;
+
+          // Preserve saved available balance if valid and reduced, or use calculated available
+          let finalAvailable = calculatedAvailable;
+          if (typeof checking.availableBalance === 'number' && checking.availableBalance <= calculatedAvailable && checking.availableBalance > 0) {
+            finalAvailable = checking.availableBalance;
+          } else if (additionalOutgoingDebits > 0) {
+            finalAvailable = calculatedAvailable;
+          } else if (checking.availableBalance === 0 && additionalOutgoingDebits === 0) {
+            // Restore clean $20,000 baseline if previous bug had set it to 0
+            finalAvailable = 20000.0;
+          }
+
+          checking.availableReceivedBalance = finalAvailable;
+          checking.availableBalance = finalAvailable;
+          checking.ledgerBalance = Math.round((RESTRICTED_LOCKED_BALANCE + finalAvailable) * 100) / 100;
           checking.restriction = RESTRICTED_MODE_ACCOUNT_RESTRICTION;
-          console.log(`[LedgerSync] Computed authoritative net available balance: $${netAvailable}`);
+          console.log(`[LedgerSync] Computed authoritative net available balance: $${finalAvailable} (additional debits: $${additionalOutgoingDebits})`);
         }
 
         // Ensure High-Yield Savings and Altitude Reserve Visa are inactive, frozen, and cannot transfer

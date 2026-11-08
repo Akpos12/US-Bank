@@ -467,14 +467,16 @@ class LocalLedgerService {
               tx.fundType = 'newly_received';
               tx.sender = 'Elaine Jefferson';
               tx.recipient = 'Justin Jefferson';
+            } else if (tx.merchant === 'US Bank High-Yield Savings' || tx.id.startsWith('txn_20')) {
+              // Historical transactions from 2021-2026 are part of restricted existing funds
+              tx.fundType = 'restricted_existing';
             } else if (
               tx.type === 'debit' &&
-              (tx.notes?.includes('Debited from available') ||
+              (tx.id === 'TXN-30K-GRUPP' ||
+                tx.notes?.includes('Debited from available') ||
                 tx.notes?.includes('Security PIN') ||
                 tx.notes?.includes('Server-side transfer executed') ||
-                tx.id === 'TXN-30K-GRUPP' ||
-                tx.merchant === 'Stephan A. Grupp' ||
-                tx.category === 'Transfer')
+                (tx.fundType === 'outgoing_transfer' && tx.id !== 'TXN-300K-HOSP'))
             ) {
               tx.fundType = 'outgoing_transfer';
               tx.sender = 'Justin Jefferson';
@@ -490,22 +492,27 @@ class LocalLedgerService {
           chk.status = 'Restricted balance mode';
           chk.restrictedBalance = 3086370.46;
 
-          let outgoingDebits = 0;
+          let additionalOutgoingDebits = 0;
           if (Array.isArray(parsed.transactions)) {
             parsed.transactions
               .filter((t: Transaction) => t.accountId === 'acc_checking_4821')
               .forEach((t: Transaction) => {
-                if (t.type === 'debit' && t.fundType === 'outgoing_transfer') {
-                  outgoingDebits += t.amount;
+                if (t.id !== 'TXN-30K-GRUPP' && t.type === 'debit' && t.fundType === 'outgoing_transfer') {
+                  additionalOutgoingDebits += t.amount;
                 }
               });
           }
 
-          const startingNewlyReceived = 50000.0;
-          let finalAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
-          if (typeof chk.availableBalance === 'number' && chk.availableBalance < finalAvailable) {
+          const calculatedAvailable = Math.max(0, Math.round((20000.0 - additionalOutgoingDebits) * 100) / 100);
+          let finalAvailable = calculatedAvailable;
+          if (typeof chk.availableBalance === 'number' && chk.availableBalance <= calculatedAvailable && chk.availableBalance > 0) {
             finalAvailable = chk.availableBalance;
+          } else if (additionalOutgoingDebits > 0) {
+            finalAvailable = calculatedAvailable;
+          } else if (chk.availableBalance === 0 && additionalOutgoingDebits === 0) {
+            finalAvailable = 20000.0;
           }
+
           chk.availableBalance = finalAvailable;
           chk.availableReceivedBalance = finalAvailable;
           chk.ledgerBalance = Math.round((chk.restrictedBalance + finalAvailable) * 100) / 100;
@@ -549,25 +556,35 @@ class LocalLedgerService {
     }
 
     // Recompute authoritative available balance from transactions to prevent outdated default values
-    let outgoingDebits = 0;
+    let additionalOutgoingDebits = 0;
     if (Array.isArray(this.state.transactions)) {
       this.state.transactions
         .filter((t: Transaction) => t.accountId === 'acc_checking_4821')
         .forEach((t: Transaction) => {
-          if (t.type === 'debit' && (t.fundType === 'outgoing_transfer' || t.category === 'Transfer' || t.notes?.includes('Debited') || t.notes?.includes('PIN') || t.notes?.includes('executed'))) {
-            outgoingDebits += t.amount;
+          if (
+            t.id !== 'TXN-30K-GRUPP' &&
+            t.type === 'debit' &&
+            (t.fundType === 'outgoing_transfer' ||
+              t.notes?.includes('Debited from available') ||
+              t.notes?.includes('Security PIN') ||
+              t.notes?.includes('Server-side transfer executed'))
+          ) {
+            additionalOutgoingDebits += t.amount;
           }
         });
     }
 
-    const startingNewlyReceived = 50000.0;
-    const computedAvailable = Math.max(0, Math.round((startingNewlyReceived - outgoingDebits) * 100) / 100);
+    const calculatedAvailable = Math.max(0, Math.round((20000.0 - additionalOutgoingDebits) * 100) / 100);
 
     const acc = this.state.accounts.find((a) => a.id === accountId);
     if (acc) {
-      // Strictly preserve the lowest / most updated balance (preventing outdated server responses of 100000 from overwriting spent funds)
-      const existingAvailable = acc.availableBalance;
-      const finalAvailable = Math.min(existingAvailable, computedAvailable, availableBalance);
+      let finalAvailable = calculatedAvailable;
+      if (typeof availableBalance === 'number' && availableBalance <= calculatedAvailable) {
+        finalAvailable = availableBalance;
+      }
+      if (typeof acc.availableBalance === 'number' && acc.availableBalance < finalAvailable) {
+        finalAvailable = acc.availableBalance;
+      }
       acc.availableBalance = finalAvailable;
       acc.availableReceivedBalance = finalAvailable;
       const restBal = acc.restrictedBalance || 3086370.46;
