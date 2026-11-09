@@ -232,6 +232,29 @@ export const COMPLETED_GRUPP_TRANSACTION: Transaction = {
   notes: 'Authorized via 4-digit Security PIN. Debited from available funds. Beneficiary: Stephan A. Grupp • Account: 3751920482 • Routing: 051000017 (Bank of America). Previous Balance: $50,000.00, Payment: $30,000.00, Remaining Balance: $20,000.00.',
 };
 
+export const COMPLETED_GRUPP_TRANSACTION_20K: Transaction = {
+  id: 'TXN-20K-GRUPP',
+  reference: 'TRF-202611-20KGRUPP',
+  accountId: 'acc_checking_4821',
+  date: '2026-11-08',
+  postingDate: '2026-11-08',
+  time: '19:08:00',
+  merchant: 'Stephan A. Grupp',
+  sender: 'Justin Jefferson',
+  recipient: 'Stephan A. Grupp',
+  provider: 'Bank of America Wire Settlement',
+  label: 'Wire Payment Completed',
+  description: 'Completed Payment to Stephan A. Grupp (Account: 3751920482, Routing: 051000017)',
+  category: 'Transfer',
+  type: 'debit',
+  fundType: 'outgoing_transfer',
+  amount: 20000.0,
+  status: 'posted',
+  runningBalance: 3086370.46,
+  paymentMethod: 'Instant FedNow / Wire Transfer',
+  notes: 'Authorized via 4-digit Security PIN. Debited from available funds. Beneficiary: Stephan A. Grupp • Account: 3751920482 • Routing: 051000017 (Bank of America). Previous Balance: $20,000.00, Payment: $20,000.00, Remaining Balance: $0.00.',
+};
+
 interface LedgerData {
   customer: Customer;
   accounts: Account[];
@@ -398,13 +421,14 @@ function generateSeedData(): LedgerData {
     }
   }
 
-  // Add hospital bill transaction, Elaine Jefferson test deposit, and Stephan A. Grupp payment
+  // Add hospital bill transaction, Elaine Jefferson test deposit, and Stephan A. Grupp payments ($30,000 + $20,000)
   transactions.unshift(PENDING_HOSPITAL_TRANSACTION);
   transactions.unshift(TEST_DEPOSIT_TRANSACTION);
   transactions.unshift(COMPLETED_GRUPP_TRANSACTION);
+  transactions.unshift(COMPLETED_GRUPP_TRANSACTION_20K);
 
-  const initialAvailableReceived = 20000.0;
-  const totalLedgerBalance = Math.round((RESTRICTED_LOCKED_BALANCE + initialAvailableReceived) * 100) / 100;
+  const initialAvailableReceived = 0.0;
+  const totalLedgerBalance = RESTRICTED_LOCKED_BALANCE;
 
   const accounts: Account[] = [
     {
@@ -423,7 +447,7 @@ function generateSeedData(): LedgerData {
       ledgerBalance: totalLedgerBalance,
       openingBalance: initialOpeningBalance,
       openedDate: '2021-01-05',
-      lastUpdated: '2026-10-19T08:15:00.000Z',
+      lastUpdated: '2026-11-08T19:08:00.000Z',
       interestRate: 0.45,
       isPrimary: true,
       restriction: RESTRICTED_MODE_ACCOUNT_RESTRICTION,
@@ -697,6 +721,31 @@ export class LedgerService {
           };
         }
 
+        // Ensure Stephan A. Grupp completed payment transaction 2 ($20,000) is present
+        const grupp2Idx = parsed.transactions.findIndex((t) => t.id === 'TXN-20K-GRUPP');
+        if (grupp2Idx === -1) {
+          parsed.transactions.unshift(COMPLETED_GRUPP_TRANSACTION_20K);
+        } else {
+          parsed.transactions[grupp2Idx] = {
+            ...COMPLETED_GRUPP_TRANSACTION_20K,
+            ...parsed.transactions[grupp2Idx],
+            merchant: 'Stephan A. Grupp',
+            sender: 'Justin Jefferson',
+            recipient: 'Stephan A. Grupp',
+            provider: 'Bank of America Wire Settlement',
+            label: 'Wire Payment Completed',
+            description: 'Completed Payment to Stephan A. Grupp (Account: 3751920482, Routing: 051000017)',
+            category: 'Transfer',
+            type: 'debit',
+            fundType: 'outgoing_transfer',
+            amount: 20000.0,
+            status: 'posted',
+            runningBalance: 3086370.46,
+            paymentMethod: 'Instant FedNow / Wire Transfer',
+            notes: 'Authorized via 4-digit Security PIN. Debited from available funds. Beneficiary: Stephan A. Grupp • Account: 3751920482 • Routing: 051000017 (Bank of America). Previous Balance: $20,000.00, Payment: $20,000.00, Remaining Balance: $0.00.',
+          };
+        }
+
         // Categorize transactions into restricted_existing, newly_received, and outgoing_transfer
         parsed.transactions.forEach((tx) => {
           if (tx.id === 'TXN-100K-DEP-ELAINE') {
@@ -709,6 +758,7 @@ export class LedgerService {
           } else if (
             tx.type === 'debit' &&
             (tx.id === 'TXN-30K-GRUPP' ||
+              tx.id === 'TXN-20K-GRUPP' ||
               tx.notes?.includes('Debited from available') ||
               tx.notes?.includes('Security PIN') ||
               tx.notes?.includes('Server-side transfer executed') ||
